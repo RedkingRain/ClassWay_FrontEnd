@@ -5,12 +5,12 @@ function Header() {
     return (
         <header className="border-b border-gray-200 bg-white">
             <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
-                {/* 1. 로고 */}
-                <a href="/" className="shrink-0">
+                {/* 1. 로고 - 누르면 메인으로 */}
+                <Link to="/" className="shrink-0">
                     <img src={logo} alt="ClassWay 홈으로" className="h-6 w-auto" />
-                </a>
+                </Link>
 
-                {/* 2. 카테고리 버튼 */}
+                {/* 2. 카테고리 버튼 - 페이지 이동이 아니라 목록 펼치기라 button 유지 */}
                 <button
                     type="button"
                     className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-800"
@@ -35,12 +35,12 @@ function Header() {
 
                 {/* 4. 사용자 메뉴 (로그인 전) */}
                 <nav className="ml-auto flex shrink-0 items-center gap-2">
-                    <a href="/login" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
+                    <Link to="/login" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
                         로그인
-                    </a>
-                    <a href="/signup" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
+                    </Link>
+                    <Link to="/signup" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
                         회원가입
-                    </a>
+                    </Link>
                 </nav>
             </div>
         </header>

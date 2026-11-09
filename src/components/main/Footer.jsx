@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 function Footer() {
     return (
         <footer className="bg-[#112117] text-gray-400">
@@ -5,11 +7,11 @@ function Footer() {
                 {/* 1. 고객지원·정책 링크 */}
                 <nav aria-label="고객지원 및 정책">
                     <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-200">
-                        <li><a href="/notice" className="hover:text-white">공지사항</a></li>
-                        <li><a href="/faq" className="hover:text-white">FAQ</a></li>
-                        <li><a href="/support" className="hover:text-white">고객센터</a></li>
-                        <li><a href="/terms" className="hover:text-white">이용약관</a></li>
-                        <li><a href="/privacy" className="hover:text-white">개인정보처리방침</a></li>
+                        <li><Link to="/notice" className="hover:text-white">공지사항</Link></li>
+                        <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
+                        <li><Link to="/support" className="hover:text-white">고객센터</Link></li>
+                        <li><Link to="/terms" className="hover:text-white">이용약관</Link></li>
+                        <li><Link to="/privacy" className="hover:text-white">개인정보처리방침</Link></li>
                     </ul>
                 </nav>
 
