@@ -1,5 +1,8 @@
 import logo from '../../assets/classway-logo.svg';
 import { Menu, Search } from 'lucide-react'
+import { Link } from 'react-router-dom';
+import UserMenu from './UserMenu.jsx';
+import { currentUser } from '../../mocks/userData.js';
 
 function Header() {
     return (
@@ -34,14 +37,7 @@ function Header() {
                 </form>
 
                 {/* 4. 사용자 메뉴 (로그인 전) */}
-                <nav className="ml-auto flex shrink-0 items-center gap-2">
-                    <Link to="/login" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
-                        로그인
-                    </Link>
-                    <Link to="/signup" className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-800 hover:bg-gray-200">
-                        회원가입
-                    </Link>
-                </nav>
+                <UserMenu user={currentUser} />
             </div>
         </header>
     );
