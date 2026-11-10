@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ClassCurriculum from './ClassCurriculum.jsx';
+import ClassIntro from './ClassIntro.jsx';
 
 // detail: 상세 API 응답 data
 function ClassDetailTabs({ detail }) {
@@ -41,7 +42,7 @@ function ClassDetailTabs({ detail }) {
 
             {/* 탭 내용 — 선택된 탭 하나만 보여줌 */}
             <div className="py-8">
-                {activeTab === 'intro' && <p className="text-gray-400">강의 소개 영역 (다음 강의)</p>}
+                {activeTab === 'intro' && <ClassIntro detail={detail} />}
                 {activeTab === 'curriculum' && (
                     <ClassCurriculum classType={detail.classType} chapters={detail.chapters} />
                 )}

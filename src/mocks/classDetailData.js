@@ -8,7 +8,7 @@ export const mockClassDetails = {
         classId: 1,
         title: '주말 원데이 마카롱 만들기',
         summary: '머랭 치는 법부터 꼬끄 굽기, 필링 채우기까지 3시간 동안 마카롱 20개를 직접 완성합니다.',
-        description: '<p>재료와 앞치마는 공방에서 모두 준비해 드리고, 만든 마카롱은 선물 상자에 담아 가져갈 수 있습니다.</p>',
+        description: '<p>머랭 치는 법부터 꼬끄 굽기, 필링 채우기까지 <strong>3시간 동안 마카롱 20개</strong>를 직접 완성합니다.</p><h2>이런 분께 추천해요</h2><ul><li>베이킹이 처음인 분</li><li>선물용 디저트를 직접 만들고 싶은 분</li></ul><p>재료와 앞치마는 공방에서 모두 준비해 드리고, 만든 마카롱은 <em>선물 상자</em>에 담아 가져갈 수 있습니다.</p>',
         classType: 'OFFLINE',
         category: { categoryId: 3, name: '베이킹 · 요리' },
         thumbnailUrl: null,
