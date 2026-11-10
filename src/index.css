@@ -7,3 +7,11 @@
     --color-brand-light: #E6EEE8; /* 마우스 호버 기능같은 연한 그린색 */
     --color-brand-dark: #14211B;   /* 푸터용 아주 진한 그린색 */
 }
+
+/* 버튼에 마우스를 올리면 손가락 모양 (Tailwind v4는 기본이 화살표라서) */
+@layer base {
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
+    }
+}

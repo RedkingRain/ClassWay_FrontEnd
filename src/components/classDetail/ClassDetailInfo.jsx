@@ -43,10 +43,24 @@ function ClassDetailInfo({ detail }) {
                     <ChevronRight size={14} />
                     <span>{category.name}</span>
                 </nav>
-                <div className="flex items-center gap-3 text-gray-700">
-                    {/* 찜하기는 P1, 공유하기는 다음 단계에서 동작 연결 */}
-                    <button type="button" aria-label="찜하기"><Bookmark size={20} /></button>
-                    <button type="button" aria-label="링크 공유" onClick={handleShare} className="hover:text-gray-900">
+                <div className="flex items-center gap-1 text-gray-700">
+                    {/* 찜하기는 P1 */}
+                    <button
+                        type="button"
+                        aria-label="찜하기"
+                        className="group p-2"
+                    >
+                        <Bookmark
+                            size={20}
+                            className="transition group-hover:fill-brand group-hover:text-brand"
+                        />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="링크 공유"
+                        onClick={handleShare}
+                        className="rounded-full p-2 transition hover:bg-gray-100 hover:text-gray-900"
+                    >
                         <Share2 size={20} />
                     </button>
                 </div>
@@ -137,7 +151,7 @@ function ClassDetailInfo({ detail }) {
                         type="button"
                         onClick={() => setIsTutorOpen(!isTutorOpen)}
                         aria-expanded={isTutorOpen}
-                        className="flex shrink-0 items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
                     >
                         강사 소개
                         <ChevronDown size={16} className={isTutorOpen ? 'rotate-180 transition' : 'transition'} />
