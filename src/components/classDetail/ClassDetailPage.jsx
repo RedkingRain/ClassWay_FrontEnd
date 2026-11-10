@@ -1,26 +1,45 @@
-// useParams: 주소에서 값 꺼내기 (/classes/1 → classId = "1")
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom';
+import ClassDetailInfo from './ClassDetailInfo.jsx';
+import { mockClassDetails } from '../../mocks/classDetailData.js';
 
 function ClassDetailPage() {
-    // App.jsx의 path="/classes/:classId" 에서 :classId 자리 값
-    const { classId} = useParams();
+    // 주소 /classes/1 → classId = "1"
+    const { classId } = useParams();
+    // 뒤로가기 등 코드로 페이지 이동할 때 쓰는 도구
+    const navigate = useNavigate();
 
+    // 가짜 데이터에서 찾기 (나중에 API 호출로 교체)
+    const detail = mockClassDetails[classId];
+
+    // 없는 번호 = 비공개·삭제된 클래스와 같은 화면 (와이어프레임 CLASS-001)
+    if (!detail) {
+        return (
+            <main className="mx-auto max-w-6xl px-4 py-32 text-center">
+                <p className="text-lg font-semibold text-gray-900">존재하지 않는 강의입니다.</p>
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="mt-5 rounded-lg bg-[#133621] px-5 py-2.5 text-sm font-medium text-white hover:bg-green-950"
+                >
+                    이전 페이지로
+                </button>
+            </main>
+        );
+    }
 
     return (
         <main className="mx-auto max-w-6xl px-4 py-8">
-            {/* 1. 대표 이미지 / 영상 */}
-            <div className="flex aspect-[16/7] items-center justify-center rounded-xl bg-gray-100 text-gray-400">
-                대표 이미지 영역 (클래스 {classId}번)
+            {/* 1. 대표 이미지 (영상 재생은 추후) */}
+            <div className="aspect-[16/7] overflow-hidden rounded-xl bg-gray-100">
+                {detail.thumbnailUrl && (
+                    <img src={detail.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                )}
             </div>
 
-            {/* 왼쪽 내용 + 오른쪽 결제 박스 (넓은 화면에서만 2칸) */}
             <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px]">
-                {/* 왼쪽 */}
                 <div>
                     {/* 2. 상세 정보 */}
-                    <section className="rounded-lg border border-dashed border-gray-300 p-6 text-gray-400">
-                        상세 정보 영역
-                    </section>
+                    <ClassDetailInfo detail={detail} />
 
                     {/* 3. 탭 */}
                     <section className="mt-8 rounded-lg border border-dashed border-gray-300 p-6 text-gray-400">
@@ -28,7 +47,7 @@ function ClassDetailPage() {
                     </section>
                 </div>
 
-                {/* 4. 결제 박스 — 스크롤해도 화면 위쪽에 붙어서 따라옴 본문 보조 역할이라 aside 사용 */}
+                {/* 4. 결제 박스 */}
                 <aside className="self-start lg:sticky lg:top-6">
                     <div className="rounded-xl border border-dashed border-gray-300 p-6 text-gray-400">
                         결제 박스 영역
@@ -38,6 +57,5 @@ function ClassDetailPage() {
         </main>
     );
 }
-
 
 export default ClassDetailPage;
