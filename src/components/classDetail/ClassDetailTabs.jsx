@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ClassCurriculum from './ClassCurriculum.jsx';
 import ClassIntro from './ClassIntro.jsx';
+import ClassReviewList from './ClassReviewList.jsx';
 
 // detail: 상세 API 응답 data
 function ClassDetailTabs({ detail }) {
@@ -46,7 +47,13 @@ function ClassDetailTabs({ detail }) {
                 {activeTab === 'curriculum' && (
                     <ClassCurriculum classType={detail.classType} chapters={detail.chapters} />
                 )}
-                {activeTab === 'reviews' && <p className="text-gray-400">수강평 영역 (P0 수강평 작업)</p>}
+                {activeTab === 'reviews' && (
+                    <ClassReviewList
+                        classId={detail.classId}
+                        reviewCount={detail.reviewCount}
+                        avgRating={detail.avgRating}
+                    />
+                )}
                 {activeTab === 'qna' && <p className="text-gray-400">Q&A 준비 중</p>}
             </div>
         </section>
