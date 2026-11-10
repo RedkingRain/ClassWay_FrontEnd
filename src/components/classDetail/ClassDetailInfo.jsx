@@ -4,12 +4,7 @@ import {
     Bookmark, Share2, ChevronRight, ChevronDown, Star,
     MapPin, Clock, PlayCircle, ListVideo, CalendarDays, Users,
 } from 'lucide-react';
-
-// 분 → "약 N시간" (1시간 미만은 "N분")
-function formatDuration(minutes) {
-    if (minutes < 60) return `${minutes}분`;
-    return `약 ${Math.round(minutes / 60)}시간`;
-}
+import { formatDuration } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
 function ClassDetailInfo({ detail }) {

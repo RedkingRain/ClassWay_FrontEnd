@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import ClassDetailInfo from './ClassDetailInfo.jsx';
 import { mockClassDetails } from '../../mocks/classDetailData.js';
+import ClassDetailTabs from './ClassDetailTabs.jsx';
 
 function ClassDetailPage() {
     // 주소 /classes/1 → classId = "1"
@@ -42,9 +43,7 @@ function ClassDetailPage() {
                     <ClassDetailInfo detail={detail} />
 
                     {/* 3. 탭 */}
-                    <section className="mt-8 rounded-lg border border-dashed border-gray-300 p-6 text-gray-400">
-                        탭 영역 (강의 소개 / 커리큘럼 / 수강평 / Q&A)
-                    </section>
+                    <ClassDetailTabs detail={detail} />
                 </div>
 
                 {/* 4. 결제 박스 */}

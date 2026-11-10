@@ -25,8 +25,27 @@ export const mockClassDetails = {
         region: '서울 성동구',
         address: '서울 성동구 [상세 주소] · 성수역 3번 출구 도보 5분',
         maxCapacity: 6,
-        tutor: { tutorId: 1, nickname: '김하늘', profileImage: null, intro: '성수동 디저트 공방 운영',
-            career: '- 제과기능사\n- 성수동 디저트 공방 5년 운영\n- 원데이 클래스 누적 수강생 1,200명', classCount: 3 },
+        tutor: {
+            tutorId: 1,
+            nickname: '김하늘',
+            profileImage: null,
+            intro: '성수동 디저트 공방 운영',
+            career: '- 제과기능사\n- 성수동 디저트 공방 5년 운영\n- 원데이 클래스 누적 수강생 1,200명',
+            classCount: 3,
+        },
+        // 커리큘럼 (오프라인: 챕터 1개 안에 단계만 나열)
+        chapters: [
+            {
+                chapterId: 1,
+                title: '커리큘럼',
+                lectures: [
+                    { lectureId: 1, title: '재료 소개와 머랭 치기', durationMinutes: 40, isPreview: false },
+                    { lectureId: 2, title: '마카로나주와 꼬끄 짜기', durationMinutes: 50, isPreview: false },
+                    { lectureId: 3, title: '굽는 동안 필링 만들기', durationMinutes: 50, isPreview: false },
+                    { lectureId: 4, title: '필링 채우고 포장하기', durationMinutes: 40, isPreview: false },
+                ],
+            },
+        ],
     },
 
     // 온라인 예시 (DB 샘플 2번)
@@ -51,7 +70,32 @@ export const mockClassDetails = {
         region: null,
         address: null,
         maxCapacity: null,
-        tutor: { tutorId: 2, nickname: '윤소희', profileImage: null, intro: '요가 강사 · 온라인 클래스 운영',
-            career: null, classCount: 2 },
+        tutor: {
+            tutorId: 2,
+            nickname: '윤소희',
+            profileImage: null,
+            intro: '요가 강사 · 온라인 클래스 운영',
+            career: null,
+            classCount: 2,
+        },
+        // 커리큘럼 (온라인: 챕터 여러 개, 미리보기 강의 있음)
+        chapters: [
+            {
+                chapterId: 2,
+                title: '몸 깨우기',
+                lectures: [
+                    { lectureId: 5, title: '호흡 준비와 스트레칭', durationMinutes: 12, isPreview: true },
+                    { lectureId: 6, title: '척추 깨우기', durationMinutes: 15, isPreview: false },
+                ],
+            },
+            {
+                chapterId: 3,
+                title: '아침 루틴 완성하기',
+                lectures: [
+                    { lectureId: 7, title: '태양 경배 자세', durationMinutes: 18, isPreview: false },
+                    { lectureId: 8, title: '마무리 명상', durationMinutes: 10, isPreview: false },
+                ],
+            },
+        ],
     },
 };
