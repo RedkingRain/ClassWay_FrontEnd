@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+/* 팀 공통 색 — 여기서 이름을 붙이면 bg-brand, text-brand 처럼 사용 가능 */
+@theme {
+    --color-brand: #133621; /* 모든 페이지 공통 메인 그린색 */
+    --color-point: #16A34A; /* 별이나 토글, 할인율같은 포인트 그린색 */
+    --color-brand-light: #E6EEE8; /* 마우스 호버 기능같은 연한 그린색 */
+    --color-brand-dark: #14211B;   /* 푸터용 아주 진한 그린색 */
+}
