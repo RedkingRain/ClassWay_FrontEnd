@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import ClassDetailPage from "./components/classDetail/ClassDetailPage.jsx";
 
 // 공통 틀
 import Layout from './components/main/Layout.jsx';
@@ -16,7 +17,7 @@ function App() {
             <Route element={<Layout />}>
                 {/* "/" 주소로 오면 MainPage를 Layout의 <Outlet /> 자리에 보여줌 */}
                 <Route path="/" element={<MainPage />} />
-
+                <Route path="/classes/:classId" element={<ClassDetailPage />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/login" element={<LoginPage />} /> */}
             </Route>
