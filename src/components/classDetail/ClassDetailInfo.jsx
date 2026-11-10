@@ -19,6 +19,20 @@ function ClassDetailInfo({ detail }) {
     const accessMonths = accessDays ? Math.round(accessDays / 30) : null;
     // 강사 소개가 펼쳐졌는지 기억 (처음엔 접힘 = false)
     const [isTutorOpen, setIsTutorOpen] = useState(false);
+    // 토스트 알림 기억 (없으면 null / 있으면 { type: 'success' 또는 'error', message: 문구 })
+    const [toast, setToast] = useState(null);
+
+    // 링크 공유: 지금 페이지 주소를 클립보드에 복사
+    async function handleShare() {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setToast({ type: 'success', message: '주소가 클립보드에 복사되었습니다.' });
+        } catch {
+            setToast({ type: 'error', message: '주소 복사에 실패했습니다. 다시 시도해 주세요.' });
+        }
+        // 2초(2000ms) 뒤 토스트 지우기
+        setTimeout(() => setToast(null), 2000);
+    }
 
     return (
         <section>
@@ -32,7 +46,9 @@ function ClassDetailInfo({ detail }) {
                 <div className="flex items-center gap-3 text-gray-700">
                     {/* 찜하기는 P1, 공유하기는 다음 단계에서 동작 연결 */}
                     <button type="button" aria-label="찜하기"><Bookmark size={20} /></button>
-                    <button type="button" aria-label="링크 공유"><Share2 size={20} /></button>
+                    <button type="button" aria-label="링크 공유" onClick={handleShare} className="hover:text-gray-900">
+                        <Share2 size={20} />
+                    </button>
                 </div>
             </div>
 
@@ -143,6 +159,19 @@ function ClassDetailInfo({ detail }) {
                     </div>
                 )}
             </div>
+            {/* 토스트 알림 — 화면 아래 가운데에 잠깐 떴다 사라짐 */}
+            {toast && (
+                <div
+                    role="status"
+                    className={`fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-lg px-5 py-3 text-sm shadow-lg ${
+                        toast.type === 'success'
+                            ? 'bg-gray-900 text-white'
+                            : 'border border-gray-300 bg-white text-gray-800'
+                    }`}
+                >
+                    {toast.message}
+                </div>
+            )}
         </section>
     );
 }
