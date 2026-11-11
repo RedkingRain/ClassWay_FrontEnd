@@ -2,9 +2,11 @@ import logo from '../../assets/classway-logo.svg';
 import { Menu, Search } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import UserMenu from './UserMenu.jsx';
-import { currentUser } from '../../mocks/userData.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 function Header() {
+    const { user, isLoading, logout } = useAuth();
+
     return (
         <header className="border-b border-gray-200 bg-white">
             <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
@@ -36,8 +38,8 @@ function Header() {
                     />
                 </form>
 
-                {/* 4. 사용자 메뉴 (로그인 전) */}
-                <UserMenu user={currentUser} />
+                {/* 4. 사용자 메뉴 */}
+                <UserMenu user={user} isLoading={isLoading} onLogout={logout} />
             </div>
         </header>
     );

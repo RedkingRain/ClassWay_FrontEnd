@@ -9,7 +9,12 @@ const rolePageClass =
     'flex h-10 items-center rounded-lg bg-[#133621] px-4 text-sm font-medium text-white hover:bg-green-800';
 
 // user: 지금 로그인한 사람 (없으면 null) — Header에서 받아옴
-function UserMenu({ user }) {
+function UserMenu({ user, isLoading, onLogout }) {
+    // 새로고침 직후 /auth/me 확인 중에는 버튼 깜빡임 방지
+    if (isLoading) {
+        return <div className="ml-auto shrink-0" />;
+    }
+
     // 1. 로그인 전: 사용자가 없으면 여기서 바로 끝
     if (!user) {
         return (
@@ -27,7 +32,7 @@ function UserMenu({ user }) {
         </button>
     );
     const logoutButton = (
-        <button type="button" className={textLinkClass}>로그아웃</button>
+        <button type="button" onClick={onLogout} className={textLinkClass}>로그아웃</button>
     );
 
     // 2. 강사·관리자: 전용 페이지 바로가기 + 알림 + 로그아웃
