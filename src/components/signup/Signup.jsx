@@ -61,9 +61,12 @@ function Signup() {
     // 이메일 중복 확인 및 인증번호 발송/검증 상태
     const [emailStatus, setEmailStatus] = useState({ type: '', message: '' });
     const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [isResendingEmail, setIsResendingEmail] = useState(false);
     const [isEmailSentModalOpen, setIsEmailSentModalOpen] = useState(false); // 발송 완료 안내 팝업
     const [showVerificationInput, setShowVerificationInput] = useState(false); // 인증번호 입력 영역 노출 여부
     const [verificationCode, setVerificationCode] = useState('');
+    const [verificationStatus, setVerificationStatus] = useState({ type: '', message: '' });
+    const [isCheckingCode, setIsCheckingCode] = useState(false);
     const [timerSeconds, setTimerSeconds] = useState(0);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
 
@@ -123,20 +126,20 @@ function Signup() {
         setNicknameStatus({ type: '', message: '' });
 
         try {
-            // const response = await fetch(`${API_BASE_URL}/auth/nickname_check`, {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ nickname: trimmed }),
-            // });
-            // const result = await response.json().catch(() => ({}));
+            const response = await fetch(`${API_BASE_URL}/auth/nickname_duplicate_check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname: trimmed }),
+            });
+            const result = await response.json().catch(() => ({}));
 
-            // if (!response.ok || result.success === false) {
-            //     setNicknameStatus({
-            //         type: 'error',
-            //         message: result.message || '이미 사용 중인 닉네임입니다.',
-            //     });
-            //     return;
-            // }
+            if (!response.ok || !result.success) {
+                setNicknameStatus({
+                    type: 'error',
+                    message: result.message || '닉네임 검증에 실패했습니다.',
+                });
+                return;
+            }
 
             setNicknameStatus({
                 type: 'success',
@@ -168,26 +171,29 @@ function Signup() {
         setEmailStatus({ type: '', message: '' });
 
         try {
-            // const response = await fetch(`${API_BASE_URL}/auth/email_check`, {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ email: trimmed }),
-            // });
-            // const result = await response.json().catch(() => ({}));
+            const response = await fetch(`${API_BASE_URL}/auth/email_check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: trimmed }),
+            });
+            const result = await response.json().catch(() => ({}));
 
-            // if (!response.ok || result.success === false) {
-            //     setEmailStatus({
-            //         type: 'error',
-            //         message: result.message || '사용할 수 없는 이메일입니다.',
-            //     });
-            //     return;
-            // }
+            if (!response.ok || !result.success) {
+                setEmailStatus({
+                    type: 'error',
+                    message: result.message || '이메일 검증에 실패했습니다.',
+                });
+                return;
+            }
 
             setEmailStatus({
                 type: 'success',
                 message: '사용 가능한 이메일입니다.',
             });
+
             setIsEmailVerified(false);
+            setVerificationCode('');
+            setVerificationStatus({ type: '', message: '' });
             setShowVerificationInput(true);
             setTimerSeconds(AUTH_CODE_SECONDS);
             setIsEmailSentModalOpen(true);
@@ -201,10 +207,97 @@ function Signup() {
         }
     }
 
-    // 인증번호 '확인' 버튼 클릭 처리 (추후 인증번호 검증 API 연동 시 이 함수에서 호출)
-    function handleVerifyCode() {
-        if (!verificationCode.trim()) return;
-        setIsEmailVerified(true);
+    /**
+     * 이메일 인증번호 재발송 (POST /auth/email_confirm_code_send)
+     * - '재발송' 버튼 클릭 시 호출
+     */
+    async function handleResendVerificationEmail() {
+        const trimmed = email.trim();
+        if (!trimmed) {
+            setEmailStatus({ type: 'error', message: '이메일을 입력해 주세요.' });
+            return;
+        }
+
+        setIsResendingEmail(true);
+        setVerificationStatus({ type: '', message: '' });
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/email_confirm_code_send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: trimmed }),
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || !result.success) {
+                setVerificationStatus({
+                    type: 'error',
+                    message: result.message || '인증번호 재발송에 실패했습니다.',
+                });
+                return;
+            }
+
+            setVerificationCode('');
+            setTimerSeconds(AUTH_CODE_SECONDS);
+            setIsEmailSentModalOpen(true);
+        } catch {
+            setVerificationStatus({
+                type: 'error',
+                message: '인증번호 재발송 중 오류가 발생했습니다.',
+            });
+        } finally {
+            setIsResendingEmail(false);
+        }
+    }
+
+    /**
+     * 인증번호 확인 (POST /auth/email_code_check)
+     * Request: { "email": string, "code": string }
+     */
+    async function handleVerifyCode() {
+        const trimmedCode = verificationCode.trim();
+        const trimmedEmail = email.trim();
+
+        if (!trimmedCode) {
+            setVerificationStatus({ type: 'error', message: '인증번호를 입력해 주세요.' });
+            return;
+        }
+
+        setIsCheckingCode(true);
+        setVerificationStatus({ type: '', message: '' });
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/email_code_check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: trimmedEmail,
+                    code: trimmedCode,
+                }),
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || !result.success) {
+                setVerificationStatus({
+                    type: 'error',
+                    message: result.message || '인증번호가 일치하지 않습니다.',
+                });
+                return;
+            }
+
+            setIsEmailVerified(true);
+            setVerificationStatus({
+                type: 'success',
+                message: result.message || '이메일 인증이 완료되었습니다.',
+            });
+        } catch {
+            setVerificationStatus({
+                type: 'error',
+                message: '인증번호 확인 중 오류가 발생했습니다.',
+            });
+        } finally {
+            setIsCheckingCode(false);
+        }
     }
 
     /**
@@ -426,6 +519,9 @@ function Signup() {
                                 // 이메일 변경 시 이전 확인/인증 상태 초기화
                                 setEmailStatus({ type: '', message: '' });
                                 setIsEmailVerified(false);
+                                setShowVerificationInput(false);
+                                setVerificationCode('');
+                                setVerificationStatus({ type: '', message: '' });
                             }}
                             placeholder="classway@example.com"
                             className={inputClass}
@@ -450,57 +546,74 @@ function Signup() {
                         </p>
                     )}
 
-                    {/* 정상 발송 시 이메일 입력란 하단에 인증번호 입력란 및 타이머 노출 */}
+                    {/* 정상 발송 시 이메일 입력란 하단에 인증번호 입력란 노출 (인증 완료 시 입력칸/버튼은 숨기고 완료 메시지만 표시) */}
                     {showVerificationInput && (
                         <div className="mt-3">
-                            <label
-                                htmlFor="signup-verification-code"
-                                className="mb-1.5 block text-sm font-medium text-gray-800"
-                            >
-                                인증번호
-                            </label>
-                            <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                    <input
-                                        id="signup-verification-code"
-                                        type="text"
-                                        maxLength={6}
-                                        value={verificationCode}
-                                        onChange={(e) => setVerificationCode(e.target.value)}
-                                        disabled={isEmailVerified}
-                                        placeholder="6자리 숫자"
-                                        className={`${inputClass} ${isEmailVerified ? 'bg-gray-50 text-gray-500' : 'pr-16'}`}
-                                    />
-                                    {!isEmailVerified && (
-                                        <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-600">
-                                            {formatTimer(timerSeconds)}
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleVerifyCode}
-                                    disabled={isEmailVerified}
-                                    className="h-11 shrink-0 rounded-lg bg-brand px-4 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
-                                >
-                                    {isEmailVerified ? '인증 완료' : '확인'}
-                                </button>
-                            </div>
-                            <div className="mt-1.5 flex items-center justify-between text-xs text-gray-500">
-                                <span>
-                                    인증번호가 오지 않았다면{' '}
-                                    <button
-                                        type="button"
-                                        onClick={handleSendVerificationEmail}
-                                        className="font-semibold text-gray-800 underline underline-offset-2"
+                            {isEmailVerified ? (
+                                <p className="flex items-center gap-1 text-xs text-point font-medium">
+                                    <Check size={13} />
+                                    <span>{verificationStatus.message || '이메일 인증이 완료되었습니다.'}</span>
+                                </p>
+                            ) : (
+                                <>
+                                    <label
+                                        htmlFor="signup-verification-code"
+                                        className="mb-1.5 block text-sm font-medium text-gray-800"
                                     >
-                                        재발송
-                                    </button>
-                                </span>
-                                {isEmailVerified && (
-                                    <span className="font-medium text-point">인증 확인됨</span>
-                                )}
-                            </div>
+                                        인증번호
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                id="signup-verification-code"
+                                                type="text"
+                                                maxLength={6}
+                                                value={verificationCode}
+                                                onChange={(e) => {
+                                                    setVerificationCode(e.target.value);
+                                                    setVerificationStatus({ type: '', message: '' });
+                                                }}
+                                                placeholder="6자리 숫자"
+                                                className={`${inputClass} pr-16`}
+                                            />
+                                            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-600">
+                                                {formatTimer(timerSeconds)}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleVerifyCode}
+                                            disabled={isCheckingCode}
+                                            className="h-11 shrink-0 rounded-lg bg-brand px-4 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
+                                        >
+                                            {isCheckingCode ? '확인 중...' : '확인'}
+                                        </button>
+                                    </div>
+                                    {verificationStatus.message && (
+                                        <p
+                                            className={`mt-1.5 flex items-center gap-1 text-xs ${
+                                                verificationStatus.type === 'success' ? 'text-point' : 'text-red-600'
+                                            }`}
+                                        >
+                                            {verificationStatus.type === 'success' && <Check size={13} />}
+                                            <span>{verificationStatus.message}</span>
+                                        </p>
+                                    )}
+                                    <div className="mt-1.5 flex items-center justify-between text-xs text-gray-500">
+                                        <span>
+                                            인증번호가 오지 않았다면{' '}
+                                            <button
+                                                type="button"
+                                                onClick={handleResendVerificationEmail}
+                                                disabled={isResendingEmail}
+                                                className="font-semibold text-gray-800 underline underline-offset-2 disabled:opacity-50"
+                                            >
+                                                {isResendingEmail ? '재발송 중...' : '재발송'}
+                                            </button>
+                                        </span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
