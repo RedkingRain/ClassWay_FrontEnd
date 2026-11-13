@@ -4,10 +4,9 @@ import { formatDuration } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
 function ClassIntro({ detail }) {
-    const { description, classType, address, lectureCount, totalDurationMinutes, accessDays } = detail;
+    const { description, classType, address, lectureCount, totalDurationMinutes } = detail;
 
     const isOnline = classType === 'ONLINE';
-    const accessMonths = accessDays ? Math.round(accessDays / 30) : null;
     const totalText = formatDuration(totalDurationMinutes).replace('약 ', '');
 
     //    강사가 Tiptap으로 쓴 HTML에서 위험한 코드(script, onerror 등)만 제거
@@ -17,7 +16,6 @@ function ClassIntro({ detail }) {
     // 온라인 수강 방법 박스 (수강 기기는 모든 클래스 공통이라 고정 문구)
     const onlineInfo = [
         { label: '강의 구성', value: `VOD ${lectureCount}강 · 총 ${totalText}` },
-        { label: '수강 기한', value: `결제일로부터 ${accessMonths}개월` },
         { label: '수강 기기', value: 'PC · 모바일 · 태블릿' },
     ];
 

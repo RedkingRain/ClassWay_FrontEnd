@@ -10,13 +10,11 @@ import { formatDuration } from '../../utils/format.js';
 function ClassDetailInfo({ detail }) {
     const {
         title, summary, classType, category, avgRating, reviewCount, wishCount,
-        studentCount, totalDurationMinutes, lectureCount, accessDays, region, tutor,
+        studentCount, totalDurationMinutes, lectureCount, region, tutor,
         maxCapacity,
     } = detail;
 
     const isOnline = classType === 'ONLINE';
-    // 수강 기한: 일 → 개월 (180일 → 6개월)
-    const accessMonths = accessDays ? Math.round(accessDays / 30) : null;
     // 강사 소개가 펼쳐졌는지 기억 (처음엔 접힘 = false)
     const [isTutorOpen, setIsTutorOpen] = useState(false);
     // 토스트 알림 기억 (없으면 null / 있으면 { type: 'success' 또는 'error', message: 문구 })
@@ -103,7 +101,7 @@ function ClassDetailInfo({ detail }) {
 
             {/* 핵심 요약 */}
             <p className="mt-3 text-sm font-semibold text-gray-900">
-                {isOnline ? `수강 기한 ${accessMonths}개월` : '원데이 클래스'}
+                {isOnline ? `클래스 비활성화 전 까지 수강` : '원데이 클래스'}
                 <span className="mx-2 font-normal text-gray-300">|</span>
                 {formatDuration(totalDurationMinutes)}
             </p>
@@ -117,7 +115,7 @@ function ClassDetailInfo({ detail }) {
                 <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                     <p className="text-sm font-semibold text-gray-900">클래스 정보</p>
                     <p className="text-xs text-gray-400">
-                        {isOnline ? '* 수강 기한은 정책에 따라 달라질 수 있습니다' : '* 일정에 따라 달라질 수 있습니다'}
+                        {isOnline ? '* 한 번 결제하면 기한 없이 계속 수강할 수 있습니다' : '* 일정에 따라 달라질 수 있습니다'}
                     </p>
                 </div>
                 <ul className="mt-3 grid grid-cols-2 gap-y-2 text-sm text-gray-700 sm:grid-cols-4">
@@ -126,7 +124,7 @@ function ClassDetailInfo({ detail }) {
                             {/* 온라인 */}
                             <li className="flex items-center gap-1.5"><PlayCircle size={16} />온라인 VOD</li>
                             <li className="flex items-center gap-1.5"><ListVideo size={16} />{lectureCount}강 · 총 {formatDuration(totalDurationMinutes)}</li>
-                            <li className="flex items-center gap-1.5"><CalendarDays size={16} />결제일부터 {accessMonths}개월</li>
+                            <li className="flex items-center gap-1.5"><CalendarDays size={16} />기한 없이 계속 수강</li>
                         </>
                     ) : (
                         <>

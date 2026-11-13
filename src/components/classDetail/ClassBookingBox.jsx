@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import { ChevronDown, Minus, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
 import DatePicker from '../common/DatePicker.jsx';
+import ConfirmModal from '../common/ConfirmModal.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { mockSchedules } from '../../mocks/scheduleData.js';
+import { addMockCartItem } from "../../mocks/cartData.js";
 import { toDateKey, formatTime } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
 function ClassBookingBox({ detail }) {
-    const { classId, classType, price, salePrice, discountRate } = detail;
+    const { classId, classType, price, salePrice, discountRate, isEnrolled } = detail;
 
     const isOnline = classType === 'ONLINE';
+    // 이미 수강 중인 온라인 클래스 → 수강 신청 · 장바구니 막기 (오프라인은 다른 날짜 재예약 가능)
+    const isAlreadyEnrolled = isOnline && isEnrolled;
     const hasDiscount = discountRate > 0 && salePrice !== null;
     const unitPrice = salePrice ?? price; // 1인 가격 (할인 없으면 정가)
     const discountAmount = price - unitPrice;
@@ -17,6 +23,75 @@ function ClassBookingBox({ detail }) {
     const [selectedDateKey, setSelectedDateKey] = useState(null); // 고른 날짜
     const [selectedScheduleId, setSelectedScheduleId] = useState(null); // 고른 시간(일정)
     const [quantity, setQuantity] = useState(1); // 인원
+
+    // ───── 로그인 확인 · 팝업 ─────
+    const { user, isLoading } = useAuth();
+    const navigate = useNavigate();
+    // 지금 떠 있는 팝업 (없으면 null / 'login': 로그인 필요)
+    const [modal, setModal] = useState(null);
+    // 버튼 위에 보여줄 안내 문구 (없으면 빈 글자)
+    const [bookingError, setBookingError] = useState('');
+    // 담는 중인지 (버튼 연속 클릭으로 두 번 담기는 것 방지)
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // 로그인 안 했으면 로그인 팝업 띄우고 false
+    function checkLogin() {
+        if (isLoading) return false; // 새로고침 직후 로그인 확인 중이면 잠깐 무시
+        if (!user) {
+            setModal('login');
+            return false;
+        }
+        return true;
+    }
+
+    // 오프라인: 날짜 · 시간 · 인원을 제대로 골랐는지 확인 (온라인은 고를 게 없어서 통과)
+    function checkSelection() {
+        if (isAlreadyEnrolled) return false; // 버튼이 막혀 있지만 한번 더 안전장치
+        if (isOnline) return true;
+        if (!selectedScheduleId) {
+            setBookingError('날짜와 시간을 선택해 주세요.');
+            return false;
+        }
+        // 인원 초과 문구는 인원 칸 아래에 이미 보이고 있어서 여기선 막기만 함
+        if (isOverCapacity) return false;
+        setBookingError('');
+        return true;
+    }
+
+    // 장바구니에 담기 (오프라인은 고른 일정 · 인원, 온라인은 1명)
+    // 결과: { alreadyInCart: true/false }
+    async function putInCart() {
+        setIsSubmitting(true);
+        try {
+            return await addMockCartItem({
+                classId,
+                scheduleId: isOnline ? null : selectedScheduleId,
+                quantity: isOnline ? 1 : quantity,
+            });
+        } finally {
+            setIsSubmitting(false); // 성공 · 실패 상관없이 다시 누를 수 있게
+        }
+    }
+
+    // 예약하기 / 수강 신청하기 → 장바구니에 담고 바로 장바구니로 (이미 있으면 그냥 이동)
+    async function handleReserve() {
+        if (!checkSelection()) return;
+        if (!checkLogin()) return;
+        await putInCart();
+        navigate('/carts');
+    }
+
+    // 장바구니 담기 → 담기 완료 팝업 (이미 있으면 바로 장바구니로)
+    async function handleAddToCart() {
+        if (!checkSelection()) return;
+        if (!checkLogin()) return;
+        const { alreadyInCart } = await putInCart();
+        if (alreadyInCart) {
+            navigate('/carts');
+            return;
+        }
+        setModal('cartAdded');
+    }
 
     // 일정 (나중에 API 호출로 교체)
     const schedules = mockSchedules[classId] ?? [];
@@ -45,6 +120,10 @@ function ClassBookingBox({ detail }) {
 
     // 총 결제 금액 (온라인은 1명 고정)
     const totalPrice = unitPrice * (isOnline ? 1 : quantity);
+
+    // 적립 예정 포인트: 실제 결제 금액의 1%, 소수점 버림
+    // 상세에서는 쿠폰 · 포인트 적용 전 금액이라 「최대」로 표시 (실제 적립은 결제 시 서버가 계산)
+    const maxEarnPoint = Math.floor(totalPrice * 0.01);
 
     // 날짜 바꾸면 시간은 다시 고르기
     function handleSelectDate(dateKey) {
@@ -116,7 +195,9 @@ function ClassBookingBox({ detail }) {
                                             key={s.scheduleId}
                                             type="button"
                                             disabled={isFull}
-                                            onClick={() => setSelectedScheduleId(s.scheduleId)}
+                                            onClick={() => {setSelectedScheduleId(s.scheduleId);
+                                                                    setBookingError('');
+                                            }}
                                             className={`h-11 rounded-lg border text-sm transition ${
                                                 isFull
                                                     ? 'border-gray-100 bg-gray-100 text-gray-400 line-through'
@@ -191,27 +272,75 @@ function ClassBookingBox({ detail }) {
                 </>
             )}
 
-            {/* ───── 포인트 적립 — 정책 확정 후 ───── */}
-            <p className="flex items-center justify-center gap-2 text-sm text-gray-400">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-white">P</span>
-                포인트 적립 (정책 확정 후)
+            {/* ───── 적립 예정 포인트 ───── */}
+            <p className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">P</span>
+                최대 {maxEarnPoint.toLocaleString()}P 적립
             </p>
+
+            {/* ───── 이미 수강 중 (온라인) ───── */}
+            {isAlreadyEnrolled && (
+                <p className="mt-4 rounded-lg bg-brand-light py-3 text-center text-sm font-medium text-brand">
+                    이미 수강 중인 클래스입니다
+                </p>
+            )}
+
+            {/* ───── 버튼 누를 때 빠진 선택 안내 ───── */}
+            {bookingError && (
+                <p role="alert" className="mt-4 text-center text-sm text-red-600">{bookingError}</p>
+            )}
 
             {/* ───── 버튼 ───── */}
             <div className="mt-5 space-y-2">
                 <button
                     type="button"
-                    className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90"
+                    onClick={handleReserve}
+                    disabled={isSubmitting || isAlreadyEnrolled}
+                    className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90
+                     disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
                 >
                     {isOnline ? '수강 신청하기' : '예약하기'}
                 </button>
                 <button
                     type="button"
-                    className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50"
+                    onClick={handleAddToCart}
+                    disabled={isSubmitting || isAlreadyEnrolled}
+                    className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50
+                     disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                 >
                     장바구니 담기
                 </button>
             </div>
+
+            {/* 이미 수강 중이면 수강 내역 바로가기 (MY-002) */}
+            {isAlreadyEnrolled && (
+                <Link
+                    to="/my/classes"
+                    className="mt-4 flex items-center justify-center gap-0.5 text-sm text-gray-600 hover:text-brand"
+                >
+                    수강 내역에서 보기
+                    <ChevronRight size={16} />
+                </Link>
+            )}
+
+            {/* ───── 팝업 ───── */}
+            {modal === 'login' && (
+                <ConfirmModal
+                    message="로그인 후 이용 가능한 기능입니다."
+                    confirmLabel="로그인하기"
+                    onCancel={() => setModal(null)}
+                    onConfirm={() => navigate('/login')}
+                />
+            )}
+
+            {modal === 'cartAdded' && (
+                <ConfirmModal
+                    message={'장바구니에 담겼습니다.\n확인하시겠습니까?'}
+                    confirmLabel="장바구니로 이동"
+                    onCancel={() => setModal(null)}
+                    onConfirm={() => navigate('/carts')}
+                />
+            )}
         </div>
     );
 }
