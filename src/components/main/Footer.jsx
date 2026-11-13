@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 function Footer() {
     return (
-        <footer className="bg-[#112117] text-gray-400">
+        <footer className="bg-brand-dark text-gray-400">
             <div className="mx-auto max-w-6xl px-4 py-10">
                 {/* 1. 고객지원·정책 링크 */}
                 <nav aria-label="고객지원 및 정책">
