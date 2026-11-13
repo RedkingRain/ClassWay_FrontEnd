@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Download, Minus, Plus } from 'lucide-react';
+import { ChevronDown, Minus, Plus } from 'lucide-react';
 import DatePicker from '../common/DatePicker.jsx';
 import { mockSchedules } from '../../mocks/scheduleData.js';
 import { toDateKey, formatTime } from '../../utils/format.js';
@@ -57,7 +57,7 @@ function ClassBookingBox({ detail }) {
             {/* ───── 가격 ───── */}
             <div className="flex items-end justify-between">
                 {hasDiscount ? (
-                    <span className="text-3xl font-semibold text-green-600">{discountRate}%</span>
+                    <span className="text-3xl font-semibold text-point">{discountRate}%</span>
                 ) : (
                     <span />
                 )}
@@ -197,18 +197,8 @@ function ClassBookingBox({ detail }) {
                 포인트 적립 (정책 확정 후)
             </p>
 
-            {/* ───── 쿠폰 받기 — 준비 중 ───── */}
-            <button
-                type="button"
-                disabled
-                className="mt-4 flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-brand-light text-sm text-gray-400"
-            >
-                <Download size={15} />
-                쿠폰 받기 (준비 중)
-            </button>
-
-            {/* ───── 버튼 — 동작은 37강 ───── */}
-            <div className="mt-3 space-y-2">
+            {/* ───── 버튼 ───── */}
+            <div className="mt-5 space-y-2">
                 <button
                     type="button"
                     className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90"
