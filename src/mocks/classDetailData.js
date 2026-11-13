@@ -21,7 +21,6 @@ export const mockClassDetails = {
         studentCount: 0,
         totalDurationMinutes: 180,
         lectureCount: 4,
-        accessDays: null,
         region: '서울 성동구',
         address: '서울 성동구 [상세 주소] · 성수역 3번 출구 도보 5분',
         maxCapacity: 6,
@@ -67,10 +66,10 @@ export const mockClassDetails = {
         studentCount: 1830,
         totalDurationMinutes: 55,
         lectureCount: 4,
-        accessDays: 180,
         region: null,
         address: null,
         maxCapacity: null,
+        // 로그인한 사람이 이 클래스를 수강 중인지 (서버가 reservations의 RESERVED로 판단, 비로그인은 false)
         isEnrolled: false,
         tutor: {
             tutorId: 2,
