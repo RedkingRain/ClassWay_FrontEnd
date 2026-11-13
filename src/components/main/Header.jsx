@@ -1,5 +1,6 @@
 import logo from '../../assets/classway-logo.svg';
-import { Menu, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
+import CategoryMenu from "./CategoryMenu.jsx";
 import { Link,useNavigate } from 'react-router-dom';
 import UserMenu from './UserMenu.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
@@ -27,7 +28,7 @@ function Header() {
     }
 
     return (
-        <header className="border-b border-gray-200 bg-white">
+        <header className="relative border-b border-gray-200 bg-white">
             <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
                 {/* 1. 로고 - 누르면 메인으로 */}
                 <Link to="/" className="shrink-0">
@@ -35,13 +36,7 @@ function Header() {
                 </Link>
 
                 {/* 2. 카테고리 버튼 - 페이지 이동이 아니라 목록 펼치기라 button 유지 */}
-                <button
-                    type="button"
-                    className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-800"
-                >
-                    <Menu size={20} />
-                    카테고리
-                </button>
+                <CategoryMenu />
 
                 {/* 3. 검색창 */}
                 <form onSubmit={handleSearch} role="search" className="relative max-w-xl flex-1">
