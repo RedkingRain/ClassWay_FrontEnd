@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Bookmark, Share2, ChevronRight, ChevronDown, Star,
@@ -21,6 +21,12 @@ function ClassDetailInfo({ detail }) {
     const [isTutorOpen, setIsTutorOpen] = useState(false);
     // 토스트 알림 기억 (없으면 null / 있으면 { type: 'success' 또는 'error', message: 문구 })
     const [toast, setToast] = useState(null);
+    // 토스트를 지우는 예약(타이머) 번호 기억 → 다시 누르면 이전 예약 취소용
+    const toastTimerRef = useRef(null);
+    // 페이지를 떠나면 남은 예약도 취소 (사라진 화면을 바꾸려는 일 방지)
+    useEffect(() => {
+        return () => clearTimeout(toastTimerRef.current);
+    }, []);
 
     // 링크 공유: 지금 페이지 주소를 클립보드에 복사
     async function handleShare() {
@@ -30,8 +36,9 @@ function ClassDetailInfo({ detail }) {
         } catch {
             setToast({ type: 'error', message: '주소 복사에 실패했습니다. 다시 시도해 주세요.' });
         }
-        // 2초(2000ms) 뒤 토스트 지우기
-        setTimeout(() => setToast(null), 2000);
+        // 이전 예약이 있으면 취소하고, 2초(2000ms) 뒤 토스트 지우기 예약을 새로 걸기
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => setToast(null), 2000);
     }
 
     return (
@@ -41,7 +48,12 @@ function ClassDetailInfo({ detail }) {
                 <nav aria-label="경로" className="flex items-center text-sm text-gray-500">
                     <Link to="/" className="hover:text-gray-800">홈</Link>
                     <ChevronRight size={14} />
-                    <span>{category.name}</span>
+                    <Link
+                        to={`/classes?category=${category.categoryId}`}
+                        className="hover:text-gray-800"
+                    >
+                        {category.name}
+                    </Link>
                 </nav>
                 <div className="flex items-center gap-1 text-gray-700">
                     {/* 찜하기는 P1 */}
@@ -68,7 +80,7 @@ function ClassDetailInfo({ detail }) {
 
             {/* 배지 */}
             <div className="mt-4 flex gap-1.5">
-        <span className="rounded bg-[#133621] px-2 py-0.5 text-xs text-white">
+        <span className="rounded bg-brand px-2 py-0.5 text-xs text-white">
           {isOnline ? '온라인' : '오프라인'}
         </span>
                 <span className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700">
@@ -77,11 +89,11 @@ function ClassDetailInfo({ detail }) {
             </div>
 
             {/* 제목 */}
-            <h1 className="mt-2 text-2xl font-bold text-gray-900">{title}</h1>
+            <h1 className="mt-2 text-2xl font-semibold text-gray-900">{title}</h1>
 
             {/* 별점 · 찜 · 수강생 */}
             <p className="mt-2 flex items-center gap-1 text-sm text-gray-600">
-                <Star size={14} className="fill-green-600 text-green-600" />
+                <Star size={14} className="fill-point text-point" />
                 <span className="font-medium text-gray-900">{avgRating}</span>
                 <span>({reviewCount.toLocaleString()}개 후기)</span>
                 <span>· 찜 {wishCount.toLocaleString()}</span>

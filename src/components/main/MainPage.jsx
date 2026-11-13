@@ -21,7 +21,12 @@ function MainPage() {
                 <p>이벤트 클래스 영역</p>
             </section>
 
-            {/* 수강후기 */}
+            {/* MAIN-003 전체 클래스 (더보기 → /classes) */}
+            <section>
+                <p>전체 클래스 영역</p>
+            </section>
+
+            {/* MAIN-004 수강 후기 */}
             <section>
                 <p>수강 후기 영역</p>
             </section>

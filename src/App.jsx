@@ -23,7 +23,7 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
-                {/* 예) <Route path="/login" element={<LoginPage />} /> */}
+                {/* 예) <Route path="/auth/login" element={<LoginPage />} /> */}
             </Route>
 
             {/* 헤더·푸터가 없어야 하는 페이지는 Layout 바깥(여기)에 추가 */}

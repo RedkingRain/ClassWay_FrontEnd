@@ -24,7 +24,7 @@ function ClassIntro({ detail }) {
     return (
         <div>
             {/* 이런 걸 배웁니다 */}
-            <h3 className="text-lg font-bold text-gray-900">이런 걸 배웁니다</h3>
+            <h3 className="text-lg font-semibold text-gray-900">이런 걸 배웁니다</h3>
             {safeHtml ? (
                 <div
                     // 강사가 쓴 HTML 태그엔 className을 못 붙이니까, 바깥에서 "안쪽 태그는 이렇게" 규칙을 줌
@@ -32,8 +32,8 @@ function ClassIntro({ detail }) {
             [&_p]:mb-3
             [&_strong]:font-bold [&_strong]:text-gray-900
             [&_em]:italic
-            [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-gray-900
-            [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:font-bold [&_h3]:text-gray-900
+            [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-gray-900
+            [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:font-semibold [&_h3]:text-gray-900
             [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5
             [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5
             [&_li]:mb-1
@@ -50,7 +50,7 @@ function ClassIntro({ detail }) {
             {isOnline ? (
                 // ───── 온라인: 수강 방법 ─────
                 <div className="mt-12">
-                    <h3 className="text-lg font-bold text-gray-900">수강 방법</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">수강 방법</h3>
                     <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {onlineInfo.map((item) => (
                             <div key={item.label} className="rounded-xl border border-gray-200 px-5 py-4">
@@ -63,7 +63,7 @@ function ClassIntro({ detail }) {
             ) : (
                 // ───── 오프라인: 수업 장소 ─────
                 <div className="mt-12">
-                    <h3 className="text-lg font-bold text-gray-900">수업 장소</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">수업 장소</h3>
                     <p className="mt-2 flex items-center gap-1.5 text-gray-700">
                         <MapPin size={16} className="shrink-0 text-gray-500" />
                         {address}

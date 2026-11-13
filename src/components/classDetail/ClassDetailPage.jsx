@@ -21,7 +21,7 @@ function ClassDetailPage() {
                 <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="mt-5 rounded-lg bg-[#133621] px-5 py-2.5 text-sm font-medium text-white hover:bg-green-950"
+                    className="mt-5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-brand/90"
                 >
                     이전 페이지로
                 </button>
