@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Minus, Plus } from 'lucide-react';
 import DatePicker from '../common/DatePicker.jsx';
+import ConfirmModal from '../common/ConfirmModal.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { mockSchedules } from '../../mocks/scheduleData.js';
 import { toDateKey, formatTime } from '../../utils/format.js';
 
@@ -17,6 +20,34 @@ function ClassBookingBox({ detail }) {
     const [selectedDateKey, setSelectedDateKey] = useState(null); // 고른 날짜
     const [selectedScheduleId, setSelectedScheduleId] = useState(null); // 고른 시간(일정)
     const [quantity, setQuantity] = useState(1); // 인원
+
+    // ───── 로그인 확인 · 팝업 ─────
+    const { user, isLoading } = useAuth();
+    const navigate = useNavigate();
+    // 지금 떠 있는 팝업 (없으면 null / 'login': 로그인 필요)
+    const [modal, setModal] = useState(null);
+
+    // 로그인 안 했으면 로그인 팝업 띄우고 false
+    function checkLogin() {
+        if (isLoading) return false; // 새로고침 직후 로그인 확인 중이면 잠깐 무시
+        if (!user) {
+            setModal('login');
+            return false;
+        }
+        return true;
+    }
+
+    // 예약하기 / 수강 신청하기
+    function handleReserve() {
+        if (!checkLogin()) return;
+        // TODO 1-3: 장바구니에 담고 /carts 이동
+    }
+
+    // 장바구니 담기
+    function handleAddToCart() {
+        if (!checkLogin()) return;
+        // TODO 1-3: 장바구니에 담고 「담겼습니다」 팝업
+    }
 
     // 일정 (나중에 API 호출로 교체)
     const schedules = mockSchedules[classId] ?? [];
@@ -201,17 +232,29 @@ function ClassBookingBox({ detail }) {
             <div className="mt-5 space-y-2">
                 <button
                     type="button"
+                    onClick={handleReserve}
                     className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90"
                 >
                     {isOnline ? '수강 신청하기' : '예약하기'}
                 </button>
                 <button
                     type="button"
+                    onClick={handleAddToCart}
                     className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50"
                 >
                     장바구니 담기
                 </button>
             </div>
+
+            {/* ───── 팝업 ───── */}
+            {modal === 'login' && (
+                <ConfirmModal
+                    message="로그인 후 이용 가능한 기능입니다."
+                    confirmLabel="로그인하기"
+                    onCancel={() => setModal(null)}
+                    onConfirm={() => navigate('/login')}
+                />
+            )}
         </div>
     );
 }
