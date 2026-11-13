@@ -7,6 +7,7 @@ import Layout from './components/main/Layout.jsx';
 // 각 페이지
 import MainPage from './components/main/MainPage.jsx';
 import Login from './components/login/Login.jsx'
+import Signup from './components/signup/Signup.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
 // 예) import LoginPage from './components/login/LoginPage.jsx';
 
@@ -19,6 +20,7 @@ function App() {
                 {/* "/" 주소로 오면 MainPage를 Layout의 <Outlet /> 자리에 보여줌 */}
                 <Route path="/" element={<MainPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/login" element={<LoginPage />} /> */}
