@@ -5,6 +5,7 @@ import DatePicker from '../common/DatePicker.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { mockSchedules } from '../../mocks/scheduleData.js';
+import { addMockCartItem } from "../../mocks/cartData.js";
 import { toDateKey, formatTime } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
@@ -28,6 +29,8 @@ function ClassBookingBox({ detail }) {
     const [modal, setModal] = useState(null);
     // 버튼 위에 보여줄 안내 문구 (없으면 빈 글자)
     const [bookingError, setBookingError] = useState('');
+    // 담는 중인지 (버튼 연속 클릭으로 두 번 담기는 것 방지)
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // 로그인 안 했으면 로그인 팝업 띄우고 false
     function checkLogin() {
@@ -52,18 +55,39 @@ function ClassBookingBox({ detail }) {
         return true;
     }
 
-    // 예약하기 / 수강 신청하기
-    function handleReserve() {
-        if (!checkSelection()) return;
-        if (!checkLogin()) return;
-        // TODO 1-3: 장바구니에 담고 /carts 이동
+    // 장바구니에 담기 (오프라인은 고른 일정 · 인원, 온라인은 1명)
+    // 결과: { alreadyInCart: true/false }
+    async function putInCart() {
+        setIsSubmitting(true);
+        try {
+            return await addMockCartItem({
+                classId,
+                scheduleId: isOnline ? null : selectedScheduleId,
+                quantity: isOnline ? 1 : quantity,
+            });
+        } finally {
+            setIsSubmitting(false); // 성공 · 실패 상관없이 다시 누를 수 있게
+        }
     }
 
-    // 장바구니 담기
-    function handleAddToCart() {
+    // 예약하기 / 수강 신청하기 → 장바구니에 담고 바로 장바구니로 (이미 있으면 그냥 이동)
+    async function handleReserve() {
         if (!checkSelection()) return;
         if (!checkLogin()) return;
-        // TODO 1-3: 장바구니에 담고 「담겼습니다」 팝업
+        await putInCart();
+        navigate('/carts');
+    }
+
+    // 장바구니 담기 → 담기 완료 팝업 (이미 있으면 바로 장바구니로)
+    async function handleAddToCart() {
+        if (!checkSelection()) return;
+        if (!checkLogin()) return;
+        const { alreadyInCart } = await putInCart();
+        if (alreadyInCart) {
+            navigate('/carts');
+            return;
+        }
+        setModal('cartAdded');
     }
 
     // 일정 (나중에 API 호출로 교체)
@@ -257,6 +281,7 @@ function ClassBookingBox({ detail }) {
                 <button
                     type="button"
                     onClick={handleReserve}
+                    disabled={isSubmitting}
                     className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90"
                 >
                     {isOnline ? '수강 신청하기' : '예약하기'}
@@ -264,6 +289,7 @@ function ClassBookingBox({ detail }) {
                 <button
                     type="button"
                     onClick={handleAddToCart}
+                    disabled={isSubmitting}
                     className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50"
                 >
                     장바구니 담기
@@ -277,6 +303,15 @@ function ClassBookingBox({ detail }) {
                     confirmLabel="로그인하기"
                     onCancel={() => setModal(null)}
                     onConfirm={() => navigate('/login')}
+                />
+            )}
+
+            {modal === 'cartAdded' && (
+                <ConfirmModal
+                    message={'장바구니에 담겼습니다.\n확인하시겠습니까?'}
+                    confirmLabel="장바구니로 이동"
+                    onCancel={() => setModal(null)}
+                    onConfirm={() => navigate('/carts')}
                 />
             )}
         </div>
