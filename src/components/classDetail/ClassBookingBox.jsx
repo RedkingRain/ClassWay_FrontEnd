@@ -121,6 +121,10 @@ function ClassBookingBox({ detail }) {
     // 총 결제 금액 (온라인은 1명 고정)
     const totalPrice = unitPrice * (isOnline ? 1 : quantity);
 
+    // 적립 예정 포인트: 실제 결제 금액의 1%, 소수점 버림
+    // 상세에서는 쿠폰 · 포인트 적용 전 금액이라 「최대」로 표시 (실제 적립은 결제 시 서버가 계산)
+    const maxEarnPoint = Math.floor(totalPrice * 0.01);
+
     // 날짜 바꾸면 시간은 다시 고르기
     function handleSelectDate(dateKey) {
         setSelectedDateKey(dateKey);
@@ -268,10 +272,10 @@ function ClassBookingBox({ detail }) {
                 </>
             )}
 
-            {/* ───── 포인트 적립 — 정책 확정 후 ───── */}
-            <p className="flex items-center justify-center gap-2 text-sm text-gray-400">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-white">P</span>
-                포인트 적립 (정책 확정 후)
+            {/* ───── 적립 예정 포인트 ───── */}
+            <p className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">P</span>
+                최대 {maxEarnPoint.toLocaleString()}P 적립
             </p>
 
             {/* ───── 이미 수강 중 (온라인) ───── */}
