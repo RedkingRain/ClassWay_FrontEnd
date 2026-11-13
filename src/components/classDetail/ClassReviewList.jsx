@@ -88,7 +88,7 @@ function ClassReviewList({ classId, reviewCount, avgRating }) {
                 {visibleReviews.map((review) => (
                     <li key={review.reviewId} className="border-b border-gray-200 py-6">
                         <p className="flex items-center gap-2 text-sm">
-                            <span className="font-semibold text-gray-900">{review.writerName}</span>
+                            <span className="font-semibold text-gray-900">{review.writerNickname}</span>
                             <span className="text-xs text-gray-400">
                 {/* 오프라인만 수업일 표시 */}
                                 {review.attendedAt && `${formatDate(review.attendedAt)} 수강 · `}
