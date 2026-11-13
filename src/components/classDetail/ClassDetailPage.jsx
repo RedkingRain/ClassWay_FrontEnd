@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ClassDetailInfo from './ClassDetailInfo.jsx';
 import { mockClassDetails } from '../../mocks/classDetailData.js';
 import ClassDetailTabs from './ClassDetailTabs.jsx';
+import ClassBookingBox from './ClassBookingBox.jsx';
 
 function ClassDetailPage() {
     // 주소 /classes/1 → classId = "1"
@@ -48,9 +49,7 @@ function ClassDetailPage() {
 
                 {/* 4. 결제 박스 */}
                 <aside className="self-start lg:sticky lg:top-6">
-                    <div className="rounded-xl border border-dashed border-gray-300 p-6 text-gray-400">
-                        결제 박스 영역
-                    </div>
+                    <ClassBookingBox detail={detail} />
                 </aside>
             </div>
         </main>

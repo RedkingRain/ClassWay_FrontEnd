@@ -25,7 +25,7 @@ function LectureRow({ number, lecture, showAccess }) {
               // 미리보기: 결제 전에도 재생 가능 (재생 연결은 영상 플레이어 정해지면)
               <button
                   type="button"
-                  className="rounded-md border border-[#133621]0 px-3 py-1 text-xs text-[#133621] hover:bg-green-50"
+                  className="rounded-md border border-[#133621]0 px-3 py-1 text-xs text-[#133621] hover:bg-brand-light"
               >
                   미리보기
               </button>
