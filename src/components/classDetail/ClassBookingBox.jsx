@@ -26,6 +26,8 @@ function ClassBookingBox({ detail }) {
     const navigate = useNavigate();
     // 지금 떠 있는 팝업 (없으면 null / 'login': 로그인 필요)
     const [modal, setModal] = useState(null);
+    // 버튼 위에 보여줄 안내 문구 (없으면 빈 글자)
+    const [bookingError, setBookingError] = useState('');
 
     // 로그인 안 했으면 로그인 팝업 띄우고 false
     function checkLogin() {
@@ -37,14 +39,29 @@ function ClassBookingBox({ detail }) {
         return true;
     }
 
+    // 오프라인: 날짜 · 시간 · 인원을 제대로 골랐는지 확인 (온라인은 고를 게 없어서 통과)
+    function checkSelection() {
+        if (isOnline) return true;
+        if (!selectedScheduleId) {
+            setBookingError('날짜와 시간을 선택해 주세요.');
+            return false;
+        }
+        // 인원 초과 문구는 인원 칸 아래에 이미 보이고 있어서 여기선 막기만 함
+        if (isOverCapacity) return false;
+        setBookingError('');
+        return true;
+    }
+
     // 예약하기 / 수강 신청하기
     function handleReserve() {
+        if (!checkSelection()) return;
         if (!checkLogin()) return;
         // TODO 1-3: 장바구니에 담고 /carts 이동
     }
 
     // 장바구니 담기
     function handleAddToCart() {
+        if (!checkSelection()) return;
         if (!checkLogin()) return;
         // TODO 1-3: 장바구니에 담고 「담겼습니다」 팝업
     }
@@ -147,7 +164,9 @@ function ClassBookingBox({ detail }) {
                                             key={s.scheduleId}
                                             type="button"
                                             disabled={isFull}
-                                            onClick={() => setSelectedScheduleId(s.scheduleId)}
+                                            onClick={() => {setSelectedScheduleId(s.scheduleId);
+                                                                    setBookingError('');
+                                            }}
                                             className={`h-11 rounded-lg border text-sm transition ${
                                                 isFull
                                                     ? 'border-gray-100 bg-gray-100 text-gray-400 line-through'
@@ -227,6 +246,11 @@ function ClassBookingBox({ detail }) {
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-white">P</span>
                 포인트 적립 (정책 확정 후)
             </p>
+
+            {/* ───── 버튼 누를 때 빠진 선택 안내 ───── */}
+            {bookingError && (
+                <p role="alert" className="mt-4 text-center text-sm text-red-600">{bookingError}</p>
+            )}
 
             {/* ───── 버튼 ───── */}
             <div className="mt-5 space-y-2">
