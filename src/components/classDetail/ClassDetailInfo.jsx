@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Bookmark, Share2, ChevronRight, ChevronDown, Star,
@@ -21,6 +21,12 @@ function ClassDetailInfo({ detail }) {
     const [isTutorOpen, setIsTutorOpen] = useState(false);
     // 토스트 알림 기억 (없으면 null / 있으면 { type: 'success' 또는 'error', message: 문구 })
     const [toast, setToast] = useState(null);
+    // 토스트를 지우는 예약(타이머) 번호 기억 → 다시 누르면 이전 예약 취소용
+    const toastTimerRef = useRef(null);
+    // 페이지를 떠나면 남은 예약도 취소 (사라진 화면을 바꾸려는 일 방지)
+    useEffect(() => {
+        return () => clearTimeout(toastTimerRef.current);
+    }, []);
 
     // 링크 공유: 지금 페이지 주소를 클립보드에 복사
     async function handleShare() {
@@ -30,8 +36,9 @@ function ClassDetailInfo({ detail }) {
         } catch {
             setToast({ type: 'error', message: '주소 복사에 실패했습니다. 다시 시도해 주세요.' });
         }
-        // 2초(2000ms) 뒤 토스트 지우기
-        setTimeout(() => setToast(null), 2000);
+        // 이전 예약이 있으면 취소하고, 2초(2000ms) 뒤 토스트 지우기 예약을 새로 걸기
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => setToast(null), 2000);
     }
 
     return (
