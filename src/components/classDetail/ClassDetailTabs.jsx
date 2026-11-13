@@ -31,7 +31,7 @@ function ClassDetailTabs({ detail }) {
                             onClick={() => setActiveTab(tab.key)}
                             className={`-mb-px border-b-2 py-3 text-sm ${
                                 isActive
-                                    ? 'border-[#133621] font-semibold text-[#133621]'
+                                    ? 'border-brand font-semibold text-brand'
                                     : 'border-transparent text-gray-500 hover:text-gray-800'
                             }`}
                         >

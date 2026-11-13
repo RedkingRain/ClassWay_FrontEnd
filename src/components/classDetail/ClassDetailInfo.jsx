@@ -41,7 +41,12 @@ function ClassDetailInfo({ detail }) {
                 <nav aria-label="경로" className="flex items-center text-sm text-gray-500">
                     <Link to="/" className="hover:text-gray-800">홈</Link>
                     <ChevronRight size={14} />
-                    <span>{category.name}</span>
+                    <Link
+                        to={`/classes?category=${category.categoryId}`}
+                        className="hover:text-gray-800"
+                    >
+                        {category.name}
+                    </Link>
                 </nav>
                 <div className="flex items-center gap-1 text-gray-700">
                     {/* 찜하기는 P1 */}
@@ -68,7 +73,7 @@ function ClassDetailInfo({ detail }) {
 
             {/* 배지 */}
             <div className="mt-4 flex gap-1.5">
-        <span className="rounded bg-[#133621] px-2 py-0.5 text-xs text-white">
+        <span className="rounded bg-brand px-2 py-0.5 text-xs text-white">
           {isOnline ? '온라인' : '오프라인'}
         </span>
                 <span className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700">
@@ -77,11 +82,11 @@ function ClassDetailInfo({ detail }) {
             </div>
 
             {/* 제목 */}
-            <h1 className="mt-2 text-2xl font-bold text-gray-900">{title}</h1>
+            <h1 className="mt-2 text-2xl font-semibold text-gray-900">{title}</h1>
 
             {/* 별점 · 찜 · 수강생 */}
             <p className="mt-2 flex items-center gap-1 text-sm text-gray-600">
-                <Star size={14} className="fill-green-600 text-green-600" />
+                <Star size={14} className="fill-point text-point" />
                 <span className="font-medium text-gray-900">{avgRating}</span>
                 <span>({reviewCount.toLocaleString()}개 후기)</span>
                 <span>· 찜 {wishCount.toLocaleString()}</span>

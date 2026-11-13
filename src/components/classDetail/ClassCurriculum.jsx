@@ -8,32 +8,21 @@ function twoDigits(n) {
 }
 
 // 강의 한 줄 (온·오프라인 공통 모양)
-// showAccess: 미리보기/자물쇠 칸을 보여줄지 (온라인만)
-function LectureRow({ number, lecture, showAccess }) {
+// showLock: 자물쇠 칸을 보여줄지 (온라인만 — 결제 전에는 모든 강의가 잠김)
+function LectureRow({ number, lecture, showLock }) {
     return (
         <li className="flex items-center py-3">
             {/* 번호 */}
-            <span className="w-12 shrink-0 font-semibold text-[#133621]">{twoDigits(number)}</span>
+            <span className="w-12 shrink-0 font-semibold text-brand">{twoDigits(number)}</span>
 
             {/* 강의 제목 */}
             <span className="flex-1 text-gray-800">{lecture.title}</span>
 
-            {/* 미리보기 버튼 / 자물쇠 — 같은 폭의 칸에 넣어서 세로줄 맞춤 */}
-            {showAccess && (
+            {/* 자물쇠 — 같은 폭의 칸에 넣어서 세로줄 맞춤 */}
+            {showLock && (
                 <span className="flex w-20 shrink-0 justify-end">
-          {lecture.isPreview ? (
-              // 미리보기: 결제 전에도 재생 가능 (재생 연결은 영상 플레이어 정해지면)
-              <button
-                  type="button"
-                  className="rounded-md border border-[#133621]0 px-3 py-1 text-xs text-[#133621] hover:bg-brand-light"
-              >
-                  미리보기
-              </button>
-          ) : (
-              // 잠긴 강의: 결제 후 열림
-              <Lock size={13} className="text-gray-400" aria-label="결제 후 수강 가능" />
-          )}
-        </span>
+                    <Lock size={13} className="text-gray-400" aria-label="결제 후 수강 가능" />
+                </span>
             )}
 
             {/* 시간 — 오른쪽 끝 정렬 */}
@@ -78,7 +67,7 @@ function ClassCurriculum({ classType, chapters }) {
         return (
             <div className="rounded-2xl border border-gray-200">
                 <div className="border-b border-gray-200 px-7 py-6">
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900">
                         커리큘럼
                         <span className="ml-3 text-sm font-normal text-gray-400">
               {allLectures.length}단계 | 총 {totalText}
@@ -87,7 +76,7 @@ function ClassCurriculum({ classType, chapters }) {
                 </div>
                 <ol className="px-7 py-3">
                     {allLectures.map((lecture, index) => (
-                        <LectureRow key={lecture.lectureId} number={index + 1} lecture={lecture} showAccess={false} />
+                        <LectureRow key={lecture.lectureId} number={index + 1} lecture={lecture} />
                     ))}
                 </ol>
             </div>
@@ -99,7 +88,7 @@ function ClassCurriculum({ classType, chapters }) {
         <div className="rounded-2xl border border-gray-200">
             {/* 제목 줄 */}
             <div className="flex items-center justify-between border-b border-gray-200 px-7 py-6">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900">
                     커리큘럼
                     <span className="ml-3 text-sm font-normal text-gray-400">
             챕터 {chapters.length}개 | {allLectures.length}강 | 총 {totalText}
@@ -127,7 +116,7 @@ function ClassCurriculum({ classType, chapters }) {
                                     onClick={() => toggleChapter(chapter.chapterId)}
                                     aria-expanded={isOpen}
                                     className={`flex w-full items-center justify-between rounded-xl px-5 py-4 text-left transition ${
-                                        isOpen ? 'bg-[#F2F7F3]' : 'hover:bg-[#F2F7F3]'
+                                        isOpen ? 'bg-brand-soft' : 'hover:bg-brand-soft'
                                     }`}
                                 >
                   <span>
@@ -151,7 +140,7 @@ function ClassCurriculum({ classType, chapters }) {
                                             key={lecture.lectureId}
                                             number={lectureIndex + 1}
                                             lecture={lecture}
-                                            showAccess
+                                            showLock
                                         />
                                     ))}
                                 </ol>
