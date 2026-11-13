@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Minus, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
 import DatePicker from '../common/DatePicker.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
@@ -10,9 +10,11 @@ import { toDateKey, formatTime } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
 function ClassBookingBox({ detail }) {
-    const { classId, classType, price, salePrice, discountRate } = detail;
+    const { classId, classType, price, salePrice, discountRate, isEnrolled } = detail;
 
     const isOnline = classType === 'ONLINE';
+    // 이미 수강 중인 온라인 클래스 → 수강 신청 · 장바구니 막기 (오프라인은 다른 날짜 재예약 가능)
+    const isAlreadyEnrolled = isOnline && isEnrolled;
     const hasDiscount = discountRate > 0 && salePrice !== null;
     const unitPrice = salePrice ?? price; // 1인 가격 (할인 없으면 정가)
     const discountAmount = price - unitPrice;
@@ -44,6 +46,7 @@ function ClassBookingBox({ detail }) {
 
     // 오프라인: 날짜 · 시간 · 인원을 제대로 골랐는지 확인 (온라인은 고를 게 없어서 통과)
     function checkSelection() {
+        if (isAlreadyEnrolled) return false; // 버튼이 막혀 있지만 한번 더 안전장치
         if (isOnline) return true;
         if (!selectedScheduleId) {
             setBookingError('날짜와 시간을 선택해 주세요.');
@@ -271,6 +274,13 @@ function ClassBookingBox({ detail }) {
                 포인트 적립 (정책 확정 후)
             </p>
 
+            {/* ───── 이미 수강 중 (온라인) ───── */}
+            {isAlreadyEnrolled && (
+                <p className="mt-4 rounded-lg bg-brand-light py-3 text-center text-sm font-medium text-brand">
+                    이미 수강 중인 클래스입니다
+                </p>
+            )}
+
             {/* ───── 버튼 누를 때 빠진 선택 안내 ───── */}
             {bookingError && (
                 <p role="alert" className="mt-4 text-center text-sm text-red-600">{bookingError}</p>
@@ -281,20 +291,33 @@ function ClassBookingBox({ detail }) {
                 <button
                     type="button"
                     onClick={handleReserve}
-                    disabled={isSubmitting}
-                    className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90"
+                    disabled={isSubmitting || isAlreadyEnrolled}
+                    className="h-12 w-full rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90
+                     disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
                 >
                     {isOnline ? '수강 신청하기' : '예약하기'}
                 </button>
                 <button
                     type="button"
                     onClick={handleAddToCart}
-                    disabled={isSubmitting}
-                    className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50"
+                    disabled={isSubmitting || isAlreadyEnrolled}
+                    className="h-12 w-full rounded-lg border border-brand bg-white text-sm font-semibold text-brand transition hover:bg-gray-50
+                     disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                 >
                     장바구니 담기
                 </button>
             </div>
+
+            {/* 이미 수강 중이면 수강 내역 바로가기 (MY-002) */}
+            {isAlreadyEnrolled && (
+                <Link
+                    to="/my/classes"
+                    className="mt-4 flex items-center justify-center gap-0.5 text-sm text-gray-600 hover:text-brand"
+                >
+                    수강 내역에서 보기
+                    <ChevronRight size={16} />
+                </Link>
+            )}
 
             {/* ───── 팝업 ───── */}
             {modal === 'login' && (

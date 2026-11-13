@@ -25,6 +25,7 @@ export const mockClassDetails = {
         region: '서울 성동구',
         address: '서울 성동구 [상세 주소] · 성수역 3번 출구 도보 5분',
         maxCapacity: 6,
+        isEnrolled: false,
         tutor: {
             tutorId: 1,
             nickname: '김하늘',
@@ -70,6 +71,7 @@ export const mockClassDetails = {
         region: null,
         address: null,
         maxCapacity: null,
+        isEnrolled: false,
         tutor: {
             tutorId: 2,
             nickname: '윤소희',
