@@ -1,5 +1,5 @@
 // 일정 API 완성 전까지 쓰는 가짜 데이터
-// 모양 = GET /api/classes/{classId}/schedules 응답의 data
+// 모양 = GET /classes/{classId}/schedules 응답의 data
 // 1번(오프라인)만 일정이 있음 — 주말 11:00 / 14:00 / 17:00, 정원 6명
 // 1차는 원데이만: 일정 1줄 = 수업 1회 (class_schedules)
 // - startAt: 시작 일시 (start_at)

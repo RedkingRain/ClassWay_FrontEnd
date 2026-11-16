@@ -1,5 +1,5 @@
 // 장바구니 API 완성 전까지 쓰는 가짜 장바구니
-// - 실제: POST /api/cart-items → cart_items 테이블에 저장
+// - 실제: POST /cart-items → cart_items 테이블에 저장
 // - 메모리에만 있어서 새로고침하면 비워짐 (테스트용)
 // - 같은 클래스는 장바구니에 1줄만 → 이미 있으면 담지 않고 alreadyInCart: true
 
