@@ -50,7 +50,6 @@ function ClassDetailTabs({ detail }) {
                 {activeTab === 'reviews' && (
                     <ClassReviewList
                         classId={detail.classId}
-                        reviewCount={detail.reviewCount}
                         avgRating={detail.avgRating}
                     />
                 )}
