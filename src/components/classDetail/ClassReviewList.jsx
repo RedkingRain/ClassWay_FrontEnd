@@ -45,8 +45,14 @@ function ClassReviewList({ classId, avgRating }) {
     // 숨김 · 삭제 뺀 전체 개수, 다음 페이지 여부
     const [totalCount, setTotalCount] = useState(0);
     const [hasNext, setHasNext] = useState(false);
+    // 지금 보여줘야 할 목록의 「이름표」 = 클래스 번호 + 정렬
+    const requestKey = `${classId}:${sort}`;
+    // 마지막으로 첫 페이지를 받은 이름표, 그때 실패했는지
+    const [loadedKey, setLoadedKey] = useState(null);
+    const [isError, setIsError] = useState(false);
     // 첫 페이지 불러오기 상태: loading / done / error
-    const [loadState, setLoadState] = useState('loading');
+    // 이름표가 다르면 = 아직 새 첫 페이지를 기다리는 중
+    const loadState = loadedKey !== requestKey ? 'loading' : isError ? 'error' : 'done';
     // 더보기 중인지, 더보기 실패 안내
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [loadMoreError, setLoadMoreError] = useState('');
@@ -54,8 +60,6 @@ function ClassReviewList({ classId, avgRating }) {
     // 처음 열 때 · 정렬 바꿀 때 → 첫 페이지부터 다시 받기
     useEffect(() => {
         let ignore = false; // 늦게 온 예전 응답 무시 (상세 페이지와 같은 원리)
-        setLoadState('loading');
-        setLoadMoreError('');
 
         fetchReviewPage(classId, sort, 0)
             .then((data) => {
@@ -64,19 +68,23 @@ function ClassReviewList({ classId, avgRating }) {
                 setTotalCount(data.totalCount);
                 setHasNext(data.hasNext);
                 setPage(0);
-                setLoadState('done');
+                setIsError(false);
+                setLoadedKey(requestKey);
             })
             .catch(() => {
-                if (!ignore) setLoadState('error');
+                if (ignore) return;
+                setIsError(true);
+                setLoadedKey(requestKey);
             });
 
         return () => {
             ignore = true;
         };
-    }, [classId, sort]);
+    }, [classId, sort, requestKey]);
 
     function handleSortChange(event) {
-        setSort(event.target.value); // sort가 바뀌면 위 useEffect가 다시 실행됨
+        setSort(event.target.value); // sort가 바뀌면 이름표가 바뀌어서 위 useEffect가 다시 실행됨
+        setLoadMoreError(''); // 예전 더보기 실패 문구 지우기
         event.target.blur(); // 고른 뒤 선택 상태 해제 → 초록 테두리가 남지 않게
     }
 
