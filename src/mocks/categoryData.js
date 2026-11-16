@@ -1,5 +1,5 @@
 // 카테고리 API 완성 전까지 쓰는 가짜 데이터
-// 모양 = GET /api/categories 응답의 data
+// 모양 = GET /categories 응답의 data
 // - 서버가 사용 중(is_active = TRUE)인 카테고리만 category_id 순서로 보내준다고 가정
 // - classCount: 공개(PUBLISHED) 클래스 수 (DB에 저장 X, 서버가 세서 보내줌)
 // - categoryId 3 · 4는 클래스 상세 목업(classDetailData.js)과 같은 번호
