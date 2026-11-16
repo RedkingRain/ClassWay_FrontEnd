@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
 import DatePicker from '../common/DatePicker.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { mockSchedules } from '../../mocks/scheduleData.js';
+import { authFetch } from '../../utils/auth.js';
 import { addMockCartItem } from "../../mocks/cartData.js";
 import { toDateKey, formatTime } from '../../utils/format.js';
 
@@ -23,6 +23,43 @@ function ClassBookingBox({ detail }) {
     const [selectedDateKey, setSelectedDateKey] = useState(null); // 고른 날짜
     const [selectedScheduleId, setSelectedScheduleId] = useState(null); // 고른 시간(일정)
     const [quantity, setQuantity] = useState(1); // 인원
+
+
+    // ───── 오프라인 일정 (GET /classes/{classId}/schedules) ─────
+    const [schedules, setSchedules] = useState([]);
+    // 일정 불러오기 상태: loading / done / error (온라인은 일정이 없어서 처음부터 done)
+    const [scheduleLoadState, setScheduleLoadState] = useState(isOnline ? 'done' : 'loading');
+
+    useEffect(() => {
+        if (isOnline) return; // 온라인은 일정이 없음
+
+        let ignore = false; // 늦게 온 예전 응답 무시
+
+        async function fetchSchedules() {
+            try {
+                const response = await authFetch(`/classes/${encodeURIComponent(classId)}/schedules`, {
+                    silentAuthError: true, // 비로그인도 보는 화면
+                });
+                const result = await response.json().catch(() => ({}));
+                if (ignore) return;
+
+                if (!response.ok || !result.success) {
+                    setScheduleLoadState('error');
+                    return;
+                }
+                setSchedules(result.data);
+                setScheduleLoadState('done');
+            } catch {
+                if (!ignore) setScheduleLoadState('error');
+            }
+        }
+
+        fetchSchedules();
+
+        return () => {
+            ignore = true;
+        };
+    }, [classId, isOnline]);
 
     // ───── 로그인 확인 · 팝업 ─────
     const { user, isLoading } = useAuth();
@@ -92,9 +129,6 @@ function ClassBookingBox({ detail }) {
         }
         setModal('cartAdded');
     }
-
-    // 일정 (나중에 API 호출로 교체)
-    const schedules = mockSchedules[classId] ?? [];
 
     // 예약 가능한 날짜 = 자리 남은 OPEN 일정이 하나라도 있는 날 (중복 제거)
     const availableDateKeys = [
@@ -170,7 +204,12 @@ function ClassBookingBox({ detail }) {
                 <>
                     {/* 날짜 */}
                     <p className="mb-2 text-sm font-semibold text-gray-900">날짜</p>
-                    {availableDateKeys.length > 0 ? (
+                    {/* 날짜 — 불러오는 중 / 실패 / 일정 있음 / 일정 없음 */}
+                    {scheduleLoadState === 'loading' ? (
+                        <p className="rounded-lg bg-gray-50 py-3 text-center text-sm text-gray-500">일정을 불러오는 중...</p>
+                    ) : scheduleLoadState === 'error' ? (
+                        <p className="rounded-lg bg-gray-50 py-3 text-center text-sm text-gray-500">일정을 불러오지 못했습니다. 새로고침해 주세요.</p>
+                    ) : availableDateKeys.length > 0 ? (
                         <DatePicker
                             value={selectedDateKey}
                             onChange={handleSelectDate}
