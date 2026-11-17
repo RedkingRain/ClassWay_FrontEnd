@@ -14,8 +14,10 @@ export default function PaymentSuccess() {
         const amount = Number(searchParams.get('amount'));
 
         if (!paymentKey || !orderId || !amount) {
+            // 대기 주문 데이터 정리
+            ready_data_clean(orderId);
             alert('유효하지 않은 결제 정보입니다.');
-            navigate('/cart');
+            navigate('/carts');
             return;
         }
 
@@ -26,7 +28,7 @@ export default function PaymentSuccess() {
         async function confirmOrder() {
             try {
                 // ③ 토스 결제 최종 승인 API: POST /payment/orders_confirm
-                const res = await authFetch('/payment/orders_confirm', {
+                const response = await authFetch('/payment/orders_confirm', {
                     method: 'POST',
                     body: JSON.stringify({
                         paymentKey: paymentKey,
@@ -35,21 +37,25 @@ export default function PaymentSuccess() {
                     }),
                 });
 
-                const result = await res.json();
-                if (res.ok && result.success) {
+                const result = await response.json();
+                if (response.ok && result.success) {
                     setStatusMessage('결제가 성공적으로 완료되었습니다! 이동 중입니다...');
                     alert('결제가 성공적으로 완료되었습니다!');
                     navigate(`/order/complete?orderNo=${result.data?.orderNo || orderId}`);
                 } else {
                     setStatusMessage(result.message || '결제 승인에 실패하였습니다.');
+                    // 대기 주문 데이터 정리
+                    ready_data_clean(orderId);
                     alert(result.message || '결제 승인에 실패하였습니다.');
-                    navigate('/cart');
+                    navigate('/carts');
                 }
             } catch (err) {
                 console.error('결제 승인 통신 에러:', err);
                 setStatusMessage('결제 처리 중 서버 통신 에러가 발생했습니다.');
+                // 대기 주문 데이터 정리
+                ready_data_clean(orderId);
                 alert('결제 처리 중 서버 통신 에러가 발생했습니다.');
-                navigate('/cart');
+                navigate('/carts');
             }
         }
 
@@ -63,4 +69,16 @@ export default function PaymentSuccess() {
             <p className="mt-2 text-sm text-gray-500">{statusMessage}</p>
         </div>
     );
+}
+
+function ready_data_clean(orderId) {
+    // 대기 주문 데이터 정리
+    try {
+        authFetch('/payment/cancel_order', {
+            method: 'POST',
+            body: JSON.stringify({ order_no: orderId }),
+        });
+    } catch (cancelErr) {
+        console.error('대기 주문 정리 실패:', cancelErr);
+    }
 }

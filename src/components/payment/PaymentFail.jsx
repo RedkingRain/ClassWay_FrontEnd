@@ -31,7 +31,7 @@ export default function PaymentFail() {
             {errorCode && <p className="mt-1 text-xs text-gray-400">오류 코드: {errorCode}</p>}
             <button
                 type="button"
-                onClick={() => navigate('/cart')}
+                onClick={() => navigate('/carts')}
                 className="mt-6 rounded-lg bg-emerald-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 transition"
             >
                 장바구니로 돌아가기

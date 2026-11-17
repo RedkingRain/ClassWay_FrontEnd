@@ -26,7 +26,6 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
-                <Route path="/cart" element={<CartPaymentPage />} />
                 <Route path="/carts" element={<CartPaymentPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/fail" element={<PaymentFail />} />

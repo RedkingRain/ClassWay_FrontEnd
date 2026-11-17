@@ -33,7 +33,7 @@ export default function CartPaymentPage() {
 
         if (!isAuthenticated) {
             alert('로그인이 필요한 서비스입니다.');
-            navigate('/login?returnUrl=/cart');
+            navigate('/login?returnUrl=/carts');
             return;
         }
 
@@ -60,7 +60,7 @@ export default function CartPaymentPage() {
                     });
                     setOptionEditState(editMap);
                 } else if (cartRes.status === 401) {
-                    navigate('/login?returnUrl=/cart');
+                    navigate('/login?returnUrl=/carts');
                     return;
                 }
 
@@ -103,20 +103,54 @@ export default function CartPaymentPage() {
         );
     };
 
-    // 아이템 삭제 (X 버튼)
-    const handleDeleteItem = async (cartItemId) => {
-        if (!window.confirm('장바구니에서 삭제하시겠습니까?')) return;
-        setCartItems((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
+    // 장바구니 항목 삭제 API 호출 공통 함수 (단건 / 다건 공용)
+    const requestDeleteCartItems = async (cartItemIds) => {
+        try {
+            const response = await authFetch('/cart', {
+                method: 'DELETE',
+                body: JSON.stringify({ cartItemIds }),
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                alert(result.message || '장바구니 항목 삭제에 실패했습니다.');
+                return false;
+            }
+
+            // 삭제 성공 시 프론트엔드 목록 및 옵션 편집 상태에서도 제거
+            setCartItems((prev) =>
+                prev.filter((item) => !cartItemIds.includes(item.cartItemId))
+            );
+            setOptionEditState((prev) => {
+                const next = { ...prev };
+                cartItemIds.forEach((id) => delete next[id]);
+                return next;
+            });
+
+            return true;
+        } catch (error) {
+            console.error('장바구니 삭제 요청 실패:', error);
+            alert('장바구니 항목 삭제 중 서버 통신 오류가 발생했습니다.');
+            return false;
+        }
     };
 
-    // 선택 삭제
-    const handleDeleteSelected = () => {
+    // 아이템 단건 삭제 (카드 우측 상단 X 버튼)
+    const handleDeleteItem = async (cartItemId) => {
+        if (!window.confirm('장바구니에서 삭제하시겠습니까?')) return;
+        await requestDeleteCartItems([cartItemId]);
+    };
+
+    // 체크된 아이템 다건 삭제 (선택 삭제 버튼)
+    const handleDeleteSelected = async () => {
         if (checkedItems.length === 0) {
             alert('삭제할 상품을 선택해 주세요.');
             return;
         }
         if (!window.confirm(`선택한 ${checkedItems.length}개 상품을 삭제하시겠습니까?`)) return;
-        setCartItems((prev) => prev.filter((item) => !item.isChecked));
+
+        const targetIds = checkedItems.map((item) => item.cartItemId);
+        await requestDeleteCartItems(targetIds);
     };
 
     // 4. 오프라인 옵션 변경 열기/닫기 및 수량 제어
@@ -228,37 +262,56 @@ export default function CartPaymentPage() {
             const { orderNo, orderName, amount, customerName, customerEmail } = result.data;
             currentOrderNo = orderNo;
 
-            // (3) 토스페이먼츠 v2 SDK 결제창 호출
+            // (3) 토스페이먼츠 v2 결제창형(Payment Window) 모달 팝업 호출
             const tossPayments = window.TossPayments(TOSS_CLIENT_KEY);
-            const customerKey = userInfo?.email || user?.userId?.toString() || 'ANONYMOUS_USER';
-            const payment = tossPayments.payment({ customerKey });
+            const customerKey = userInfo?.email || user?.userId?.toString() || window.TossPayments.ANONYMOUS;
+            const widgets = tossPayments.widgets({ customerKey });
 
-            await payment.requestPayment({
-                method: 'CARD',
-                amount: {
-                    currency: 'KRW',
-                    value: amount,
-                },
-                orderId: orderNo,
+            // 금액 설정
+            await widgets.setAmount({
+                currency: 'KRW',
+                value: amount,
+            });
+
+            // 결제창형(팝업 모달) UI 렌더링
+            const paymentWindow = await widgets.renderPaymentWindow({
                 orderName: orderName,
-                customerEmail: customerEmail || userInfo?.email || '',
-                customerName: customerName || userInfo?.name || '',
-                successUrl: `${window.location.origin}/payment/success`,
-                failUrl: `${window.location.origin}/payment/fail`,
+            });
+
+            // 구매자가 결제창에서 결제수단을 고르고 결제하기를 누르면 호출
+            paymentWindow.on("paymentRequest", async () => {
+                try {
+                    // 결제 요청 (결제수단 선택 팝업창 호출)
+                    await widgets.requestPayment({
+                        orderId: orderNo,
+                        orderName: orderName,
+                        successUrl: `${window.location.origin}/payment/success`,
+                        failUrl: `${window.location.origin}/payment/fail`,
+                        customerEmail: customerEmail || userInfo?.email || '',
+                        customerName: customerName || userInfo?.name || '',
+                    });
+                } catch (error) {
+                    console.error('결제 실패 : ', error);
+                }
+            });
+
+            // 구매자가 결제창을 닫거나 결제를 포기할 때 호출
+            paymentWindow.on("cancel", async () => {
+                try {
+                    // 사용자가 결제창을 닫거나 취소한 경우 백엔드 대기 주문 데이터 정리 API 호출
+                    if (currentOrderNo) {
+                        await ready_data_clean(currentOrderNo);
+                    }
+                } catch (error) {
+                    console.error('결제 진행 실패 또는 취소 : ', error);
+                }
             });
         } catch (error) {
             console.error('결제 요청 실패 또는 취소:', error);
 
-            // 사용자가 결제창을 닫거나 취소한 경우 백엔드 대기 주문 정리 API 호출
+            // 결제 진행 중 에러가 발생한 경우 백엔드 대기 주문 데이터 정리 API 호출
             if (currentOrderNo) {
-                try {
-                    await authFetch('/payment/cancel_order', {
-                        method: 'POST',
-                        body: JSON.stringify({ order_no: currentOrderNo }),
-                    });
-                } catch (cancelErr) {
-                    console.error('대기 주문 정리 실패:', cancelErr);
-                }
+                await ready_data_clean(currentOrderNo);
             }
 
             if (error?.code !== 'USER_CANCEL') {
@@ -689,4 +742,18 @@ export default function CartPaymentPage() {
             )}
         </div>
     );
+}
+
+
+
+async function ready_data_clean(orderId) {
+    // 대기 주문 데이터 정리
+    try {
+        await authFetch('/payment/cancel_order', {
+            method: 'POST',
+            body: JSON.stringify({ order_no: orderId }),
+        });
+    } catch (cancelErr) {
+        console.error('대기 주문 정리 실패:', cancelErr);
+    }
 }
