@@ -8,6 +8,10 @@ import Layout from './components/main/Layout.jsx';
 import MainPage from './components/main/MainPage.jsx';
 import Login from './components/login/Login.jsx'
 import Signup from './components/signup/Signup.jsx';
+import CartPaymentPage from './components/cart/CartPaymentPage.jsx';
+import PaymentSuccess from './components/payment/PaymentSuccess.jsx';
+import PaymentFail from './components/payment/PaymentFail.jsx';
+import OrderComplete from './components/payment/OrderComplete.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
 // 예) import LoginPage from './components/login/LoginPage.jsx';
 
@@ -22,6 +26,11 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
+                <Route path="/cart" element={<CartPaymentPage />} />
+                <Route path="/carts" element={<CartPaymentPage />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/fail" element={<PaymentFail />} />
+                <Route path="/order/complete" element={<OrderComplete />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/auth/login" element={<LoginPage />} /> */}
             </Route>
