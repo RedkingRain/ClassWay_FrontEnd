@@ -5,7 +5,6 @@ import DatePicker from '../common/DatePicker.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { authFetch } from '../../utils/auth.js';
-import { addMockCartItem } from "../../mocks/cartData.js";
 import { toDateKey, formatTime } from '../../utils/format.js';
 
 // detail: 상세 API 응답 data
@@ -95,16 +94,33 @@ function ClassBookingBox({ detail }) {
         return true;
     }
 
-    // 장바구니에 담기 (오프라인은 고른 일정 · 인원, 온라인은 1명)
-    // 결과: { alreadyInCart: true/false }
+    // 장바구니에 담기 (POST /cart)
+    // 성공하면 { cartItemId, alreadyInCart }, 실패하면 안내 문구를 띄우고 null
     async function putInCart() {
         setIsSubmitting(true);
+        setBookingError('');
         try {
-            return await addMockCartItem({
-                classId,
-                scheduleId: isOnline ? null : selectedScheduleId,
-                quantity: isOnline ? 1 : quantity,
+            // 회원 번호 · 가격은 보내지 않음 (서버가 토큰 · DB로 판단)
+            const response = await authFetch('/cart', {
+                method: 'POST',
+                body: JSON.stringify({
+                    classId,
+                    scheduleId: isOnline ? null : selectedScheduleId,
+                    quantity: isOnline ? 1 : quantity,
+                }),
             });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || !result.success) {
+                // 서버가 거절한 이유를 그대로 안내 (마감된 일정, 남은 자리 초과, 이미 수강 중 등)
+                setBookingError(result.message || '장바구니에 담지 못했습니다. 잠시 후 다시 시도해 주세요.');
+                return null;
+            }
+            return result.data;
+        } catch {
+            // 서버가 꺼져 있는 등 요청 자체가 실패
+            setBookingError('장바구니에 담지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            return null;
         } finally {
             setIsSubmitting(false); // 성공 · 실패 상관없이 다시 누를 수 있게
         }
@@ -114,7 +130,8 @@ function ClassBookingBox({ detail }) {
     async function handleReserve() {
         if (!checkSelection()) return;
         if (!checkLogin()) return;
-        await putInCart();
+        const data = await putInCart();
+        if (!data) return; // 실패 → 안내 문구만 보여주고 멈춤
         navigate('/carts');
     }
 
@@ -122,8 +139,9 @@ function ClassBookingBox({ detail }) {
     async function handleAddToCart() {
         if (!checkSelection()) return;
         if (!checkLogin()) return;
-        const { alreadyInCart } = await putInCart();
-        if (alreadyInCart) {
+        const data = await putInCart();
+        if (!data) return; // 실패 → 안내 문구만 보여주고 멈춤
+        if (data.alreadyInCart) {
             navigate('/carts');
             return;
         }
