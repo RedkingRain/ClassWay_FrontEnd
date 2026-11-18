@@ -19,7 +19,7 @@ function AllClassSection() {
     const [tab, setTab] = useState('ALL');
 
     // 2. 탭에 맞는 요청 주소 (전체는 classType 없이)
-    const query = new URLSearchParams({ size: String(MAIN_CLASS_COUNT) });
+    const query = new URLSearchParams({ size: String(MAIN_CLASS_COUNT), sort: 'random' });
     if (tab !== 'ALL') {
         query.set('classType', tab);
     }
