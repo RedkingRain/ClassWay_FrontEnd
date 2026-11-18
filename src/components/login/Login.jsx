@@ -159,11 +159,11 @@ function Login() {
 
                 {/* 링크 영역 (아이디 찾기 | 비밀번호 찾기 | 회원가입) */}
                 <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-600">
-                    <Link to="/auth/findId" className="hover:text-gray-900 hover:underline">
+                    <Link to="/login/find_account?tab=id" className="hover:text-gray-900 hover:underline">
                         아이디 찾기
                     </Link>
                     <span className="text-gray-300">|</span>
-                    <Link to="/auth/passwordReset" className="hover:text-gray-900 hover:underline">
+                    <Link to="/login/find_account?tab=pass" className="hover:text-gray-900 hover:underline">
                         비밀번호 찾기
                     </Link>
                     <span className="text-gray-300">|</span>
