@@ -1,4 +1,6 @@
-import PopularClassSection from "./PopularClassSection.jsx";
+import PopularClassSection from './PopularClassSection.jsx';
+import EventClassSection from './EventClassSection.jsx';
+import AllClassSection from './AllClassSection.jsx';
 
 function MainPage() {
     return (
@@ -14,17 +16,13 @@ function MainPage() {
             </section>
 
             {/* MAIN-003 인기 클래스 TOP 10 */}
-            <PopularClassSection/>
+            <PopularClassSection />
 
-            {/* MAIN-003 이벤트 중인 클래스 */}
-            <section>
-                <p>이벤트 클래스 영역</p>
-            </section>
+            {/* MAIN-003 이벤트 중인 클래스 (4개 미만이면 숨김) */}
+            <EventClassSection />
 
             {/* MAIN-003 전체 클래스 (더보기 → /classes) */}
-            <section>
-                <p>전체 클래스 영역</p>
-            </section>
+            <AllClassSection />
 
             {/* MAIN-004 수강 후기 */}
             <section>
