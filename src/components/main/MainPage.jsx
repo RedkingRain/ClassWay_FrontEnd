@@ -1,3 +1,5 @@
+import PopularClassSection from "./PopularClassSection.jsx";
+
 function MainPage() {
     return (
         <main>
@@ -12,9 +14,7 @@ function MainPage() {
             </section>
 
             {/* MAIN-003 인기 클래스 TOP 10 */}
-            <section>
-                <p>인기 클래스 영역</p>
-            </section>
+            <PopularClassSection/>
 
             {/* MAIN-003 이벤트 중인 클래스 */}
             <section>
