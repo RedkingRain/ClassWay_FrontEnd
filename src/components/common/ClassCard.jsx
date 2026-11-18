@@ -6,7 +6,8 @@ import { formatDuration } from '../../utils/format.js';
 // card: 백엔드 ClassCardResponse 1개
 // rank: 인기 순위 (인기 섹션에서만 넘김, 없으면 순위 배지 안 그림)
 // showEventLabel: 이벤트 배지 표시 여부 (이벤트 섹션에서만 true)
-function ClassCard({ card, rank, showEventLabel = false }) {
+// boxed: 흰 상자 모양 (진초록 배경인 이벤트 섹션에서만 true)
+function ClassCard({ card, rank, showEventLabel = false, boxed = false }) {
     // 1. 필요한 값 꺼내기
     const {
         classId, title, thumbnailUrl, classType, categoryName,
@@ -21,11 +22,16 @@ function ClassCard({ card, rank, showEventLabel = false }) {
     // 3. 화면에 크게 보여줄 가격
     const displayPrice = hasDiscount ? salePrice : price;
 
+    // 흰 상자 모양이면: 카드 전체를 흰 상자로 감싸고, 사진 모서리는 상자가 둥글게 처리, 글자에 안쪽 여백
+    const cardClass = boxed ? 'group block overflow-hidden rounded-xl bg-white' : 'group block';
+    const thumbnailClass = boxed ? '' : 'rounded-xl';
+    const textClass = boxed ? 'mt-3 space-y-1.5 px-4 pb-4' : 'mt-3 space-y-1.5';
+
     return (
         // 4. 카드 전체가 상세 페이지 링크
-        <Link to={`/classes/${classId}`} className="group block">
+        <Link to={`/classes/${classId}`} className={cardClass}>
             {/* 5. 썸네일 */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+            <div className={`relative aspect-[4/3] overflow-hidden bg-gray-100 ${thumbnailClass}`}>
                 {thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
@@ -60,7 +66,7 @@ function ClassCard({ card, rank, showEventLabel = false }) {
             </div>
 
             {/* 6. 글자 영역 */}
-            <div className="mt-3 space-y-1.5">
+            <div className={textClass}>
                 {/* 카테고리 */}
                 <p className="flex items-center gap-0.5 text-sm text-gray-500">
                     {categoryName}
