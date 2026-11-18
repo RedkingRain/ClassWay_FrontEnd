@@ -35,3 +35,18 @@ export function formatTime(value) {
     const date = new Date(value);
     return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
+
+// 알림 시간 → "방금 전" · "N분 전" · "N시간 전" · "어제" · "10.20"
+export function formatRelativeTime(value) {
+    const date = new Date(value);
+    const diffMinutes = Math.floor((Date.now() - date.getTime()) / (60 * 1000));
+
+    if (diffMinutes < 1) return '방금 전';
+    if (diffMinutes < 60) return `${diffMinutes}분 전`;
+    if (diffMinutes < 60 * 24) return `${Math.floor(diffMinutes / 60)}시간 전`;
+    if (diffMinutes < 60 * 48) return '어제';
+
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${month}.${day}`;
+}

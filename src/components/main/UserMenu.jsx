@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import AlarmMenu from './AlarmMenu.jsx';
 
 // user.role: STUDENT / TUTOR / ADMIN
 //  - 강사는 가입 때부터 TUTOR (승인 대기 · 반려 · 승인 모두)
@@ -31,11 +31,9 @@ function UserMenu({ user, isLoading, onLogout }) {
     }
 
     // 로그인 후에는 모든 역할에 공통인 버튼 → 한 번만 만들어 두고 재사용
-    const notificationButton = (
-        <button type="button" aria-label="알림" className="text-gray-800">
-            <Bell size={20} />
-        </button>
-    );
+    // 알림 버튼 + 펼침 창 (로그인 회원 공통)
+    const notificationButton = <AlarmMenu />;
+
     const logoutButton = (
         <button type="button" onClick={onLogout} className={textLinkClass}>로그아웃</button>
     );
