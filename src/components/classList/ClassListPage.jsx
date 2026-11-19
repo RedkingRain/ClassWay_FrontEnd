@@ -160,7 +160,7 @@ function ClassListPage() {
             <div className="mb-6 border-b border-gray-200 pb-6">
                 {mode === 'keyword' ? (
                     <h1 className="text-3xl font-semibold text-gray-900">
-                        '<span className="text-point">'{keyword}'</span>' 검색 결과
+                        '<span className="text-point">{keyword}</span>' 검색 결과
                         {shownData && (
                             <span className="ml-2 text-lg font-normal text-gray-400">
                                 {totalCount.toLocaleString()}개
