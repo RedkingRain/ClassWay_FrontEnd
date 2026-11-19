@@ -3,12 +3,10 @@ import ClassCurriculum from './ClassCurriculum.jsx';
 import ClassIntro from './ClassIntro.jsx';
 import ClassReviewList from './ClassReviewList.jsx';
 
-// detail: 상세 API 응답 data
+// 상세 탭 (CLASS-001), detail은 상세 API 응답 data
 function ClassDetailTabs({ detail }) {
-    // 지금 선택된 탭 기억 (처음엔 강의 소개)
     const [activeTab, setActiveTab] = useState('intro');
 
-    // 탭 목록 — key: 코드에서 구분하는 이름 / label: 화면 글자
     const tabs = [
         { key: 'intro', label: '강의 소개' },
         { key: 'curriculum', label: '커리큘럼' },
@@ -18,7 +16,6 @@ function ClassDetailTabs({ detail }) {
 
     return (
         <section className="mt-10">
-            {/* 탭 버튼 줄 */}
             <div role="tablist" className="grid grid-cols-4 border-b border-gray-200">
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.key;
@@ -41,7 +38,6 @@ function ClassDetailTabs({ detail }) {
                 })}
             </div>
 
-            {/* 탭 내용 — 선택된 탭 하나만 보여줌 */}
             <div className="py-8">
                 {activeTab === 'intro' && <ClassIntro detail={detail} />}
                 {activeTab === 'curriculum' && (

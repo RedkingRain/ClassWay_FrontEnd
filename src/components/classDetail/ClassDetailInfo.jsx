@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { formatDuration } from '../../utils/format.js';
 
-// detail: 상세 API 응답 data
+// 상세 정보 (CLASS-001), detail은 상세 API 응답 data
 function ClassDetailInfo({ detail }) {
     const {
         title, summary, classType, category, avgRating, reviewCount, wishCount,
@@ -15,18 +15,16 @@ function ClassDetailInfo({ detail }) {
     } = detail;
 
     const isOnline = classType === 'ONLINE';
-    // 강사 소개가 펼쳐졌는지 기억 (처음엔 접힘 = false)
     const [isTutorOpen, setIsTutorOpen] = useState(false);
-    // 토스트 알림 기억 (없으면 null / 있으면 { type: 'success' 또는 'error', message: 문구 })
+    // 토스트는 없으면 null, 있으면 { type, message }
     const [toast, setToast] = useState(null);
-    // 토스트를 지우는 예약(타이머) 번호 기억 → 다시 누르면 이전 예약 취소용
+    // 다시 누르면 이전 타이머를 취소하려고 번호를 기억함
     const toastTimerRef = useRef(null);
-    // 페이지를 떠나면 남은 예약도 취소 (사라진 화면을 바꾸려는 일 방지)
+    // 페이지를 떠난 뒤 사라진 화면을 바꾸지 않게 남은 타이머를 취소함
     useEffect(() => {
         return () => clearTimeout(toastTimerRef.current);
     }, []);
 
-    // 링크 공유: 지금 페이지 주소를 클립보드에 복사
     async function handleShare() {
         try {
             await navigator.clipboard.writeText(window.location.href);
@@ -34,14 +32,13 @@ function ClassDetailInfo({ detail }) {
         } catch {
             setToast({ type: 'error', message: '주소 복사에 실패했습니다. 다시 시도해 주세요.' });
         }
-        // 이전 예약이 있으면 취소하고, 2초(2000ms) 뒤 토스트 지우기 예약을 새로 걸기
+        // 연달아 눌러도 마지막 토스트가 2초 동안 보이게 이전 타이머를 취소하고 새로 검
         clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => setToast(null), 2000);
     }
 
     return (
         <section>
-            {/* 경로 + 찜·공유 */}
             <div className="flex items-center justify-between">
                 <nav aria-label="경로" className="flex items-center text-sm text-gray-500">
                     <Link to="/" className="hover:text-gray-800">홈</Link>
@@ -76,7 +73,6 @@ function ClassDetailInfo({ detail }) {
                 </div>
             </div>
 
-            {/* 배지 */}
             <div className="mt-4 flex gap-1.5">
         <span className="rounded bg-brand px-2 py-0.5 text-xs text-white">
           {isOnline ? '온라인' : '오프라인'}
@@ -86,32 +82,26 @@ function ClassDetailInfo({ detail }) {
         </span>
             </div>
 
-            {/* 제목 */}
             <h1 className="mt-2 text-2xl font-semibold text-gray-900">{title}</h1>
 
-            {/* 별점 · 찜 · 수강생 */}
             <p className="mt-2 flex items-center gap-1 text-sm text-gray-600">
                 <Star size={14} className="fill-point text-point" />
                 <span className="font-medium text-gray-900">{avgRating}</span>
                 <span>({reviewCount.toLocaleString()}개 후기)</span>
                 <span>· 찜 {wishCount.toLocaleString()}</span>
-                {/* 수강생은 0명이면 숨김 (새 클래스가 "수강생 0명"으로 보이면 오히려 손해) */}
+                {/* 새 클래스가 수강생 0명으로 보이면 오히려 손해라 0명이면 숨김 */}
                 {studentCount > 0 && <span>· 수강생 {studentCount.toLocaleString()}명</span>}
             </p>
 
-            {/* 핵심 요약 */}
             <p className="mt-3 text-sm font-semibold text-gray-900">
                 {isOnline ? `클래스 비활성화 전 까지 수강` : '원데이 클래스'}
                 <span className="mx-2 font-normal text-gray-300">|</span>
                 {formatDuration(totalDurationMinutes)}
             </p>
 
-            {/* 한 줄 소개 */}
             {summary && <p className="mt-3 leading-relaxed text-gray-700">{summary}</p>}
 
-            {/* 클래스 정보 박스 — 온·오프라인 내용이 다름 */}
             <div className="mt-6 rounded-lg bg-gray-50 p-5">
-                {/* 제목 + 오른쪽 안내 문구 */}
                 <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                     <p className="text-sm font-semibold text-gray-900">클래스 정보</p>
                     <p className="text-xs text-gray-400">
@@ -121,14 +111,12 @@ function ClassDetailInfo({ detail }) {
                 <ul className="mt-3 grid grid-cols-2 gap-y-2 text-sm text-gray-700 sm:grid-cols-4">
                     {isOnline ? (
                         <>
-                            {/* 온라인 */}
                             <li className="flex items-center gap-1.5"><PlayCircle size={16} />온라인 VOD</li>
                             <li className="flex items-center gap-1.5"><ListVideo size={16} />{lectureCount}강 · 총 {formatDuration(totalDurationMinutes)}</li>
                             <li className="flex items-center gap-1.5"><CalendarDays size={16} />기한 없이 계속 수강</li>
                         </>
                     ) : (
                         <>
-                            {/* 오프라인 */}
                             <li className="flex items-center gap-1.5"><MapPin size={16} />{region}</li>
                             <li className="flex items-center gap-1.5"><Clock size={16} />{formatDuration(totalDurationMinutes)} 진행</li>
                             {maxCapacity && (
@@ -139,8 +127,6 @@ function ClassDetailInfo({ detail }) {
                 </ul>
             </div>
 
-            {/* 강사 카드 */}
-            {/* 강사 카드 — "강사 소개" 누르면 아래로 펼쳐짐 */}
             <div className="mt-4 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-4 p-4">
                     {tutor.profileImage ? (
@@ -156,7 +142,6 @@ function ClassDetailInfo({ detail }) {
                         </p>
                     </div>
 
-                    {/* 펼치기 버튼 — 누를 때마다 true ↔ false 뒤집기 */}
                     <button
                         type="button"
                         onClick={() => setIsTutorOpen(!isTutorOpen)}
@@ -168,7 +153,6 @@ function ClassDetailInfo({ detail }) {
                     </button>
                 </div>
 
-                {/* 펼쳤을 때만 보이는 영역 */}
                 {isTutorOpen && (
                     <div className="border-t border-gray-200 p-4 text-sm leading-relaxed text-gray-700">
                         {tutor.intro && <p>{tutor.intro}</p>}
@@ -183,7 +167,6 @@ function ClassDetailInfo({ detail }) {
                     </div>
                 )}
             </div>
-            {/* 토스트 알림 — 화면 아래 가운데에 잠깐 떴다 사라짐 */}
             {toast && (
                 <div
                     role="status"

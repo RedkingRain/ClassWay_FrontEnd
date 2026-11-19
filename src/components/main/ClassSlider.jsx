@@ -2,23 +2,19 @@ import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ClassCard from '../common/ClassCard.jsx';
 
-const CARD_GAP = 16; // 카드 사이 간격 (gap-4 = 16px)
+// 목록의 gap-4(16px)와 같아야 카드 1장만큼 정확히 움직임
+const CARD_GAP = 16;
 
-// 슬라이드를 카드 1장만큼 이동 (direction: 1 오른쪽, -1 왼쪽)
+// direction은 1이면 오른쪽, -1이면 왼쪽
 function slideByCard(box, direction) {
     if (!box || !box.firstElementChild) return;
     const step = box.firstElementChild.offsetWidth + CARD_GAP;
     box.scrollBy({ left: step * direction, behavior: 'smooth' });
 }
 
-// 메인 가로 슬라이드 (인기 / 이벤트에서 같이 사용), 화살표를 누를 때만 이동
-// title: 섹션 제목
-// classes: 카드 목록 (받은 순서 그대로 보여줌)
-// showRank: true면 순서대로 1위, 2위 ... 배지
-// showEventLabel: true면 이벤트 배지
-// dark: 진초록 배경 위 (제목, 화살표 흰색 + 카드 흰 상자)
+// 메인 가로 슬라이드 (MAIN-003 인기, 이벤트), 화살표를 누를 때만 움직이고 dark는 진초록 배경용
 function ClassSlider({ title, classes, showRank = false, showEventLabel = false, dark = false }) {
-    const scrollRef = useRef(null); // 가로로 움직일 목록 상자
+    const scrollRef = useRef(null);
 
     const titleColor = dark ? 'text-white' : 'text-gray-900';
     const arrowColor = dark ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-900';
@@ -48,7 +44,7 @@ function ClassSlider({ title, classes, showRank = false, showEventLabel = false,
                 </div>
             </div>
 
-            {/* 한 화면에 4장 + 다음 카드 일부 */}
+            {/* 다음 카드 일부를 보여줘서 옆에 더 있다는 걸 알려줌 */}
             <ul
                 ref={scrollRef}
                 className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none]"

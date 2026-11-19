@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react';
 import { authFetch } from '../../utils/auth.js';
 import { formatRelativeTime } from '../../utils/format.js';
 
-// 알림 종류 → 화면 이름 (ERD alarms.type)
+// 키는 ERD alarms.type 값
 const TYPE_LABELS = {
     CLASS: '수업',
     PAYMENT: '결제',
@@ -12,13 +12,11 @@ const TYPE_LABELS = {
     NOTICE: '안내',
 };
 
-// 사이트 안 주소만 이동 허용 (/로 시작, //로 시작하는 외부 주소는 막기)
-// 알림 주소가 잘못 저장돼도 다른 사이트나 javascript: 주소로 이동하지 않게
+// 알림 주소가 잘못 저장돼도 다른 사이트나 javascript: 주소로 가지 않게 사이트 안 주소만 허용함
 function isSafeInternalLink(url) {
     return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//');
 }
 
-// 알림 목록 요청 (GET /alarms) → { alarms, unreadCount }
 async function fetchAlarms() {
     const response = await authFetch('/alarms', { silentAuthError: true });
     const result = await response.json().catch(() => ({}));
@@ -28,20 +26,17 @@ async function fetchAlarms() {
     return result.data;
 }
 
-// 헤더 알림 버튼 + 펼침 창 (MAIN-001) — 로그인 회원 공통
+// 헤더 알림 버튼과 펼침 창 (MAIN-001), 로그인 회원 공통
 function AlarmMenu() {
     const navigate = useNavigate();
-    // 펼침 창이 열렸는지
     const [isOpen, setIsOpen] = useState(false);
-    // 알림 목록, 안 읽은 개수
     const [alarms, setAlarms] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    // 불러오기 상태: loading / done / error
     const [loadState, setLoadState] = useState('loading');
-    // 버튼 + 펼침 창 전체 → 「바깥 클릭」 판단용
+    // 바깥 클릭인지 판단하려고 버튼과 펼침 창 전체를 잡음
     const menuRef = useRef(null);
 
-    // 헤더가 처음 뜰 때 → 배지 숫자를 위해 한 번 불러오기
+    // 펼치기 전에도 배지 숫자가 보이게 처음에 한 번 불러옴
     useEffect(() => {
         let ignore = false;
 
@@ -61,7 +56,7 @@ function AlarmMenu() {
         };
     }, []);
 
-    // 열려 있을 때만: 바깥 클릭 · ESC로 닫기 (카테고리 메뉴와 같은 방식)
+    // 창이 열려 있을 때만, 창 바깥을 누르거나 ESC 키를 누르면 닫히게 함 (카테고리 메뉴와 같은 방식)
     useEffect(() => {
         if (!isOpen) return;
 
@@ -82,7 +77,7 @@ function AlarmMenu() {
         };
     }, [isOpen]);
 
-    // 종 버튼 → 열 때마다 최신 알림으로 다시 불러오기
+    // 열 때마다 최신 알림으로 다시 불러옴
     async function handleToggle() {
         const nextOpen = !isOpen;
         setIsOpen(nextOpen);
@@ -98,16 +93,16 @@ function AlarmMenu() {
         }
     }
 
-    // 알림 하나 누르기 → 읽음 처리 + 그 페이지로 이동
     function handleClickAlarm(alarm) {
         if (!alarm.isRead) {
-            // 화면을 먼저 바꾸고(바로 반응하게) 서버에 저장
+            // 바로 반응하게 화면을 먼저 바꾸고 서버에 저장함
             setAlarms((prev) =>
                 prev.map((item) => (item.alarmId === alarm.alarmId ? { ...item, isRead: true } : item)),
             );
             setUnreadCount((prev) => Math.max(0, prev - 1));
+            // 서버 저장이 실패해도 다음에 알림 창을 열 때 서버 값으로 다시 고쳐지니까, 응답을 기다리지 않음
             authFetch(`/alarms/${alarm.alarmId}/read`, { method: 'PATCH', silentAuthError: true })
-                .catch(() => {}); // 실패해도 다음에 열 때 서버 값으로 다시 맞춰짐
+                .catch(() => {});
         }
 
         setIsOpen(false);
@@ -116,7 +111,6 @@ function AlarmMenu() {
         }
     }
 
-    // 모두 읽음
     async function handleReadAll() {
         try {
             const response = await authFetch('/alarms/read-all', { method: 'PATCH', silentAuthError: true });
@@ -124,13 +118,12 @@ function AlarmMenu() {
             setAlarms((prev) => prev.map((item) => ({ ...item, isRead: true })));
             setUnreadCount(0);
         } catch {
-            // 실패하면 그대로 둠
+            // 서버에 닿지 못해도 에러로 멈추지 않게 잡기만 하고, 저장이 안 됐으니 화면은 그대로 둠
         }
     }
 
     return (
         <div ref={menuRef} className="relative">
-            {/* 종 버튼 + 안 읽은 개수 배지 */}
             <button
                 type="button"
                 onClick={handleToggle}
@@ -146,10 +139,8 @@ function AlarmMenu() {
                 )}
             </button>
 
-            {/* 펼침 창 */}
             {isOpen && (
                 <div className="absolute right-0 top-full z-40 mt-3 w-[400px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-                    {/* 제목 + 모두 읽음 */}
                     <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
                         <p className="font-semibold text-gray-900">
                             알림{unreadCount > 0 && <span className="ml-1 text-point">{unreadCount}</span>}
@@ -161,7 +152,6 @@ function AlarmMenu() {
                         )}
                     </div>
 
-                    {/* 목록 */}
                     {loadState === 'loading' ? (
                         <p className="py-12 text-center text-sm text-gray-400">불러오는 중...</p>
                     ) : loadState === 'error' ? (
@@ -179,7 +169,7 @@ function AlarmMenu() {
                                             alarm.isRead ? 'bg-white' : 'bg-brand-soft'
                                         }`}
                                     >
-                                        {/* 안 읽음 초록 점 (읽으면 자리만 남김) */}
+                                        {/* 읽은 알림은 점을 지우지 않고 투명하게 해서, 모든 줄의 글자 시작 위치를 맞춤 */}
                                         <span
                                             className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
                                                 alarm.isRead ? 'bg-transparent' : 'bg-point'

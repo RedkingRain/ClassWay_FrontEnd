@@ -5,39 +5,39 @@ import DatePicker from '../common/DatePicker.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { authFetch } from '../../utils/auth.js';
-import { toDateKey, formatTime } from '../../utils/format.js';
+import { toDateKey, formatTime, isDiscounted } from '../../utils/format.js';
 
-// detail: 상세 API 응답 data
+// 상세 예약 상자 (CLASS-002), detail은 상세 API 응답 data
 function ClassBookingBox({ detail }) {
     const { classId, classType, price, salePrice, discountRate, isEnrolled } = detail;
 
     const isOnline = classType === 'ONLINE';
-    // 이미 수강 중인 온라인 클래스 → 수강 신청 · 장바구니 막기 (오프라인은 다른 날짜 재예약 가능)
+    // 오프라인은 다른 날짜로 다시 예약할 수 있어서 온라인만 이미 수강 중이면 막음
     const isAlreadyEnrolled = isOnline && isEnrolled;
-    const hasDiscount = discountRate > 0 && salePrice !== null;
-    const unitPrice = salePrice ?? price; // 1인 가격 (할인 없으면 정가)
+    const hasDiscount = isDiscounted(detail);
+    const unitPrice = salePrice ?? price;
     const discountAmount = price - unitPrice;
 
-    // ───── 오프라인 선택값 기억 ─────
-    const [selectedDateKey, setSelectedDateKey] = useState(null); // 고른 날짜
-    const [selectedScheduleId, setSelectedScheduleId] = useState(null); // 고른 시간(일정)
-    const [quantity, setQuantity] = useState(1); // 인원
+    const [selectedDateKey, setSelectedDateKey] = useState(null);
+    const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+    const [quantity, setQuantity] = useState(1);
 
 
-    // ───── 오프라인 일정 (GET /classes/{classId}/schedules) ─────
     const [schedules, setSchedules] = useState([]);
-    // 일정 불러오기 상태: loading / done / error (온라인은 일정이 없어서 처음부터 done)
+    // 온라인은 일정이 없어서 처음부터 done
     const [scheduleLoadState, setScheduleLoadState] = useState(isOnline ? 'done' : 'loading');
 
     useEffect(() => {
-        if (isOnline) return; // 온라인은 일정이 없음
+        if (isOnline) return;
 
-        let ignore = false; // 늦게 온 예전 응답 무시
+        // 다른 클래스로 빨리 이동하면 늦게 도착한 예전 응답은 무시함
+        let ignore = false;
 
         async function fetchSchedules() {
             try {
                 const response = await authFetch(`/classes/${encodeURIComponent(classId)}/schedules`, {
-                    silentAuthError: true, // 비로그인도 보는 화면
+                    // 비로그인도 보는 화면이라 토큰 문제가 있어도 로그인 페이지로 보내지 않음
+                    silentAuthError: true,
                 });
                 const result = await response.json().catch(() => ({}));
                 if (ignore) return;
@@ -60,19 +60,17 @@ function ClassBookingBox({ detail }) {
         };
     }, [classId, isOnline]);
 
-    // ───── 로그인 확인 · 팝업 ─────
     const { user, isLoading } = useAuth();
     const navigate = useNavigate();
-    // 지금 떠 있는 팝업 (없으면 null / 'login': 로그인 필요)
+    // 'login'이면 로그인 필요 팝업, 없으면 null
     const [modal, setModal] = useState(null);
-    // 버튼 위에 보여줄 안내 문구 (없으면 빈 글자)
     const [bookingError, setBookingError] = useState('');
-    // 담는 중인지 (버튼 연속 클릭으로 두 번 담기는 것 방지)
+    // 버튼을 연달아 눌러 두 번 담기지 않게 막음
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // 로그인 안 했으면 로그인 팝업 띄우고 false
     function checkLogin() {
-        if (isLoading) return false; // 새로고침 직후 로그인 확인 중이면 잠깐 무시
+        // 새로고침 직후 로그인 확인 중에는 팝업을 띄우지 않음
+        if (isLoading) return false;
         if (!user) {
             setModal('login');
             return false;
@@ -80,9 +78,10 @@ function ClassBookingBox({ detail }) {
         return true;
     }
 
-    // 오프라인: 날짜 · 시간 · 인원을 제대로 골랐는지 확인 (온라인은 고를 게 없어서 통과)
+    // 온라인은 고를 게 없어서 바로 통과함
     function checkSelection() {
-        if (isAlreadyEnrolled) return false; // 버튼이 막혀 있지만 한번 더 안전장치
+        // 버튼이 막혀 있어도 한 번 더 막음
+        if (isAlreadyEnrolled) return false;
         if (isOnline) return true;
         if (!selectedScheduleId) {
             setBookingError('날짜와 시간을 선택해 주세요.');
@@ -94,13 +93,12 @@ function ClassBookingBox({ detail }) {
         return true;
     }
 
-    // 장바구니에 담기 (POST /cart)
     // 성공하면 { cartItemId, alreadyInCart }, 실패하면 안내 문구를 띄우고 null
     async function putInCart() {
         setIsSubmitting(true);
         setBookingError('');
         try {
-            // 회원 번호 · 가격은 보내지 않음 (서버가 토큰 · DB로 판단)
+            // 회원 번호와 가격은 서버가 토큰과 DB로 판단해서 보내지 않음
             const response = await authFetch('/cart', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -112,35 +110,36 @@ function ClassBookingBox({ detail }) {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok || !result.success) {
-                // 서버가 거절한 이유를 그대로 안내 (마감된 일정, 남은 자리 초과, 이미 수강 중 등)
+                // 서버가 거절한 이유(마감, 자리 부족, 이미 수강 중 등)를 그대로 보여줌
                 setBookingError(result.message || '장바구니에 담지 못했습니다. 잠시 후 다시 시도해 주세요.');
                 return null;
             }
             return result.data;
         } catch {
-            // 서버가 꺼져 있는 등 요청 자체가 실패
+            // 서버가 꺼져 있는 등 서버에 닿지 못한 실패
             setBookingError('장바구니에 담지 못했습니다. 잠시 후 다시 시도해 주세요.');
             return null;
         } finally {
-            setIsSubmitting(false); // 성공 · 실패 상관없이 다시 누를 수 있게
+            // 성공, 실패와 상관없이 다시 누를 수 있게 함
+            setIsSubmitting(false);
         }
     }
 
-    // 예약하기 / 수강 신청하기 → 장바구니에 담고 바로 장바구니로 (이미 있으면 그냥 이동)
+    // 예약하기, 수강 신청하기는 장바구니에 담고 바로 장바구니로 이동함 (이미 있어도 이동)
     async function handleReserve() {
         if (!checkSelection()) return;
         if (!checkLogin()) return;
         const data = await putInCart();
-        if (!data) return; // 실패 → 안내 문구만 보여주고 멈춤
+        if (!data) return;
         navigate('/carts');
     }
 
-    // 장바구니 담기 → 담기 완료 팝업 (이미 있으면 바로 장바구니로)
+    // 장바구니 담기는 완료 팝업을 띄우고, 이미 있으면 바로 장바구니로 감
     async function handleAddToCart() {
         if (!checkSelection()) return;
         if (!checkLogin()) return;
         const data = await putInCart();
-        if (!data) return; // 실패 → 안내 문구만 보여주고 멈춤
+        if (!data) return;
         if (data.alreadyInCart) {
             navigate('/carts');
             return;
@@ -148,7 +147,7 @@ function ClassBookingBox({ detail }) {
         setModal('cartAdded');
     }
 
-    // 예약 가능한 날짜 = 자리 남은 OPEN 일정이 하나라도 있는 날 (중복 제거)
+    // 자리가 남은 OPEN 일정이 하나라도 있는 날만 예약할 수 있음
     const availableDateKeys = [
         ...new Set(
             schedules
@@ -157,27 +156,24 @@ function ClassBookingBox({ detail }) {
         ),
     ];
 
-    // 고른 날짜의 시간 목록 (빠른 시간 순)
     const timesOfDate = schedules
         .filter((s) => toDateKey(s.startAt) === selectedDateKey)
         .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
 
-    // 고른 일정 + 남은 자리
     const selectedSchedule = schedules.find((s) => s.scheduleId === selectedScheduleId) ?? null;
     const remainingSeats = selectedSchedule?.remainingSeats ?? null;
-    // 고른 인원이 남은 자리보다 많은지 (시간을 바꿨을 때 생길 수 있음)
+    // 인원을 고른 뒤 시간을 바꾸면 남은 자리보다 많아질 수 있음
     const isOverCapacity = remainingSeats !== null && quantity > remainingSeats;
-    // + 버튼 최대치: 시간 골랐으면 남은 자리, 아니면 최대 정원
+    // 시간을 골랐으면 남은 자리, 아니면 최대 정원까지 늘릴 수 있음
     const maxQuantity = remainingSeats ?? detail.maxCapacity ?? 1;
 
-    // 총 결제 금액 (온라인은 1명 고정)
+    // 온라인은 1명으로 고정
     const totalPrice = unitPrice * (isOnline ? 1 : quantity);
 
-    // 적립 예정 포인트: 실제 결제 금액의 1%, 소수점 버림
-    // 상세에서는 쿠폰 · 포인트 적용 전 금액이라 「최대」로 표시 (실제 적립은 결제 시 서버가 계산)
+    // 결제 금액의 1%(소수점 버림), 쿠폰과 포인트 적용 전이라 최대로 표시하고 실제 적립은 결제 때 서버가 계산함
     const maxEarnPoint = Math.floor(totalPrice * 0.01);
 
-    // 날짜 바꾸면 시간은 다시 고르기
+    // 날짜가 바뀌면 시간 목록도 바뀌어서 시간을 다시 고르게 함
     function handleSelectDate(dateKey) {
         setSelectedDateKey(dateKey);
         setSelectedScheduleId(null);
@@ -185,7 +181,6 @@ function ClassBookingBox({ detail }) {
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            {/* ───── 가격 ───── */}
             <div className="flex items-end justify-between">
                 {hasDiscount ? (
                     <span className="text-3xl font-semibold text-point">{discountRate}%</span>
@@ -217,12 +212,9 @@ function ClassBookingBox({ detail }) {
 
             <hr className="my-5 border-gray-200" />
 
-            {/* ───── 오프라인: 날짜 · 시간 · 인원 · 옵션 · 총액 ───── */}
             {!isOnline && (
                 <>
-                    {/* 날짜 */}
                     <p className="mb-2 text-sm font-semibold text-gray-900">날짜</p>
-                    {/* 날짜 — 불러오는 중 / 실패 / 일정 있음 / 일정 없음 */}
                     {scheduleLoadState === 'loading' ? (
                         <p className="rounded-lg bg-gray-50 py-3 text-center text-sm text-gray-500">일정을 불러오는 중...</p>
                     ) : scheduleLoadState === 'error' ? (
@@ -239,7 +231,6 @@ function ClassBookingBox({ detail }) {
                         <p className="rounded-lg bg-gray-50 py-3 text-center text-sm text-gray-500">예약 가능한 일정이 없습니다.</p>
                     )}
 
-                    {/* 시간 — 날짜 고른 뒤에만 */}
                     {selectedDateKey && (
                         <>
                             <p className="mb-2 mt-5 text-sm font-semibold text-gray-900">시간</p>
@@ -271,7 +262,6 @@ function ClassBookingBox({ detail }) {
                         </>
                     )}
 
-                    {/* 인원 */}
                     <div className="mt-5 flex items-center justify-between">
                         <p className="text-sm font-semibold text-gray-900">
                             인원
@@ -301,12 +291,11 @@ function ClassBookingBox({ detail }) {
                             </button>
                         </div>
                     </div>
-                    {/* 남은 자리 초과 안내 */}
                     {isOverCapacity && (
                         <p className="mt-2 text-sm text-red-600">남은 자리보다 많이 선택했습니다. 인원을 다시 선택해 주세요.</p>
                     )}
 
-                    {/* 옵션 — 3차 MVP */}
+                    {/* 옵션은 3차 MVP */}
                     <p className="mb-2 mt-5 text-sm font-semibold text-gray-900">옵션</p>
                     <div className="relative">
                         <select
@@ -321,7 +310,6 @@ function ClassBookingBox({ detail }) {
 
                     <hr className="my-5 border-gray-200" />
 
-                    {/* 총 결제 금액 */}
                     <div className="mb-5 flex items-center justify-between">
                         <span className="text-sm text-gray-700">총 결제 금액</span>
                         <span className="text-2xl font-semibold text-gray-900">{totalPrice.toLocaleString()}원</span>
@@ -329,25 +317,21 @@ function ClassBookingBox({ detail }) {
                 </>
             )}
 
-            {/* ───── 적립 예정 포인트 ───── */}
             <p className="flex items-center justify-center gap-2 text-sm text-gray-700">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">P</span>
                 최대 {maxEarnPoint.toLocaleString()}P 적립
             </p>
 
-            {/* ───── 이미 수강 중 (온라인) ───── */}
             {isAlreadyEnrolled && (
                 <p className="mt-4 rounded-lg bg-brand-light py-3 text-center text-sm font-medium text-brand">
                     이미 수강 중인 클래스입니다
                 </p>
             )}
 
-            {/* ───── 버튼 누를 때 빠진 선택 안내 ───── */}
             {bookingError && (
                 <p role="alert" className="mt-4 text-center text-sm text-red-600">{bookingError}</p>
             )}
 
-            {/* ───── 버튼 ───── */}
             <div className="mt-5 space-y-2">
                 <button
                     type="button"
@@ -369,7 +353,7 @@ function ClassBookingBox({ detail }) {
                 </button>
             </div>
 
-            {/* 이미 수강 중이면 수강 내역 바로가기 (MY-002) */}
+            {/* MY-002 수강 내역 바로가기 */}
             {isAlreadyEnrolled && (
                 <Link
                     to="/my/classes"
@@ -380,7 +364,6 @@ function ClassBookingBox({ detail }) {
                 </Link>
             )}
 
-            {/* ───── 팝업 ───── */}
             {modal === 'login' && (
                 <ConfirmModal
                     message="로그인 후 이용 가능한 기능입니다."
