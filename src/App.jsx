@@ -7,6 +7,7 @@ import Layout from './components/main/Layout.jsx';
 // 각 페이지
 import MainPage from './components/main/MainPage.jsx';
 import Login from './components/login/Login.jsx'
+import FindAccountPage from './components/login/FindAccountPage.jsx';
 import Signup from './components/signup/Signup.jsx';
 import CartPaymentPage from './components/cart/CartPaymentPage.jsx';
 import PaymentSuccess from './components/payment/PaymentSuccess.jsx';
@@ -24,6 +25,7 @@ function App() {
                 {/* "/" 주소로 오면 MainPage를 Layout의 <Outlet /> 자리에 보여줌 */}
                 <Route path="/" element={<MainPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/login/find_account" element={<FindAccountPage />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
                 <Route path="/carts" element={<CartPaymentPage />} />
