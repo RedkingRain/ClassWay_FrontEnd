@@ -84,7 +84,10 @@ function ClassListPage() {
     // 1. 주소 읽기 (주소는 누구나 고쳐 칠 수 있으니 이상한 값은 기본값으로)
     //    값이 없으면 null 대신 '' → 드롭다운(select)에 그대로 넘길 수 있게
     const keyword = (searchParams.get('keyword') ?? '').trim();
-    const category = searchParams.get('category') ?? '';
+    // 카테고리는 목록에 있는 번호만 인정 (?category=abc, ?category=999 → 카테고리 없음 = 전체)
+    const categoryParam = searchParams.get('category');
+    const selectedCategory = categories.find((item) => String(item.categoryId) === categoryParam);
+    const category = selectedCategory ? categoryParam : '';
     const classTypeParam = searchParams.get('classType');
     const classType = CLASS_TYPE_VALUES.includes(classTypeParam) ? classTypeParam : 'ALL';
     const region = classType === 'OFFLINE' ? (searchParams.get('region') ?? '') : ''; // 지역은 오프라인일 때만
@@ -95,7 +98,6 @@ function ClassListPage() {
 
     // 2. 모드 정하기 (검색어가 있으면 카테고리가 있어도 키워드 모드)
     const mode = keyword ? 'keyword' : category ? 'category' : 'all';
-    const selectedCategory = categories.find((item) => String(item.categoryId) === category);
 
     // 3. API 주소 (화면 page는 1부터, API page는 0부터 → 1 빼기), 값 있는 조건만 붙이기
     const query = new URLSearchParams({ page: String(page - 1), size: String(PAGE_SIZE), sort });
@@ -168,7 +170,7 @@ function ClassListPage() {
                 ) : (
                     <>
                         {/* 눈에는 안 보이는 제목 (화면 읽기 프로그램용) */}
-                        <h1 className="sr-only">{mode === 'category' ? selectedCategory?.name ?? '카테고리' : '전체 클래스'}</h1>
+                        <h1 className="sr-only">{mode === 'category' ? selectedCategory.name : '전체 클래스'}</h1>
                         <nav aria-label="현재 위치" className="mb-5">
                             <ol className="flex items-center gap-1 text-sm text-gray-500">
                                 <li>
@@ -182,7 +184,7 @@ function ClassListPage() {
                                         </li>
                                         <li aria-current="page" className="flex items-center gap-1 font-semibold text-gray-900">
                                             <ChevronRight size={14} aria-hidden="true" />
-                                            {selectedCategory?.name ?? '카테고리'}
+                                            {selectedCategory?.name}
                                         </li>
                                     </>
                                 ) : (
