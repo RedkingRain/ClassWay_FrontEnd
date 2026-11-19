@@ -9,6 +9,8 @@ import designIcon from '../assets/category-icons/design.svg';
 import itIcon from '../assets/category-icons/it.svg';
 import aiIcon from '../assets/category-icons/ai.svg';
 import languageIcon from '../assets/category-icons/language.svg';
+// 카테고리 아이콘 (서버 iconUrl, 없으면 SVG 파일)
+import { API_BASE_URL } from './auth.js';
 
 // 카테고리 번호 -> 아이콘 파일 (화면 꾸미기용이라 프론트에서 정함)
 // 관리자가 새 카테고리를 추가하면 여기 없는 번호가 생김 -> 기본 아이콘 (LayoutGrid)으로 표시
@@ -25,9 +27,13 @@ const CATEGORY_ICONS = {
     10: languageIcon,
 };
 
-// 카테고리 1개의 아이콘 주소 (헤더 카테고리 메뉴 · 클래스 목록 아이콘 줄에서 같이 사용)
+// 카테고리 1개의 아이콘 주소 (헤더 카테고리 메뉴, 클래스 목록 아이콘 줄에서 같이 사용)
 // 순서: 서버가 준 iconUrl → 프론트 SVG → null (null이면 쓰는 쪽에서 기본 아이콘 LayoutGrid)
-// TODO(icon_url): categories 테이블에 icon_url 칸이 생기면 GET /categories 응답의 iconUrl이 먼저 쓰임
 export function getCategoryIcon(category) {
-    return category.iconUrl || CATEGORY_ICONS[category.categoryId] || null;
+    const { iconUrl } = category;
+    if (iconUrl) {
+        // '/'로 시작하면 백엔드에 있는 파일 → 서버 주소를 앞에 붙임 (http..., '//'로 시작하면 그대로)
+        return iconUrl.startsWith('/') && !iconUrl.startsWith('//') ? `${API_BASE_URL}${iconUrl}` : iconUrl;
+    }
+    return CATEGORY_ICONS[category.categoryId] || null;
 }

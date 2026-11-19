@@ -3,8 +3,7 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import ClassCard from '../common/ClassCard.jsx';
 import CategoryIconRow from '../common/CategoryIconRow.jsx';
 import ClassListFilters from './ClassListFilters.jsx';
-import { useClassCards } from '../../utils/classApi.js';
-import { mockCategories } from '../../mocks/categoryData.js';
+import { useCategories, useClassCards } from '../../utils/classApi.js';
 
 const PAGE_SIZE = 20; // 한 페이지 개수 (4열 × 5줄)
 const PAGE_GROUP = 5; // 페이지 번호를 몇 개씩 묶어 보여줄지 (1~5, 6~10)
@@ -78,16 +77,17 @@ function Pagination({ page, totalPages, onChange }) {
 function ClassListPage() {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // 카테고리 목록 (나중에 GET /categories 호출로 교체)
-    const categories = mockCategories;
+    // 카테고리 목록 (GET /categories, 헤더 메뉴와 요청 1번을 같이 씀)
+    const { state: categoryState, data: categories } = useCategories();
 
     // 1. 주소 읽기 (주소는 누구나 고쳐 칠 수 있으니 이상한 값은 기본값으로)
     //    값이 없으면 null 대신 '' → 드롭다운(select)에 그대로 넘길 수 있게
     const keyword = (searchParams.get('keyword') ?? '').trim();
     // 카테고리는 목록에 있는 번호만 인정 (?category=abc, ?category=999 → 카테고리 없음 = 전체)
-    const categoryParam = searchParams.get('category');
+    // 단, 목록을 다 받은 뒤에만 검사 (받는 중에는 주소 값 그대로 → 전체 목록으로 튕기지 않게)
+    const categoryParam = searchParams.get('category') ?? '';
     const selectedCategory = categories.find((item) => String(item.categoryId) === categoryParam);
-    const category = selectedCategory ? categoryParam : '';
+    const category = categoryState === 'done' && !selectedCategory ? '' : categoryParam;
     const classTypeParam = searchParams.get('classType');
     const classType = CLASS_TYPE_VALUES.includes(classTypeParam) ? classTypeParam : 'ALL';
     const region = classType === 'OFFLINE' ? (searchParams.get('region') ?? '') : ''; // 지역은 오프라인일 때만
@@ -170,7 +170,7 @@ function ClassListPage() {
                 ) : (
                     <>
                         {/* 눈에는 안 보이는 제목 (화면 읽기 프로그램용) */}
-                        <h1 className="sr-only">{mode === 'category' ? selectedCategory.name : '전체 클래스'}</h1>
+                        <h1 className="sr-only">{mode === 'category' ? (selectedCategory?.name ?? '카테고리') : '전체 클래스'}</h1>
                         <nav aria-label="현재 위치" className="mb-5">
                             <ol className="flex items-center gap-1 text-sm text-gray-500">
                                 <li>
