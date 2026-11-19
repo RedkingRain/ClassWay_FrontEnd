@@ -6,7 +6,7 @@ import ClassListFilters from './ClassListFilters.jsx';
 import { useClassCards } from '../../utils/classApi.js';
 import { mockCategories } from '../../mocks/categoryData.js';
 
-const PAGE_SIZE = 12; // 한 페이지 개수 (4열 × 3줄)
+const PAGE_SIZE = 20; // 한 페이지 개수 (4열 × 5줄)
 const PAGE_GROUP = 5; // 페이지 번호를 몇 개씩 묶어 보여줄지 (1~5, 6~10)
 const CLASS_TYPE_VALUES = ['OFFLINE', 'ONLINE'];
 const SORT_VALUES = ['popular', 'latest', 'rating'];
@@ -153,7 +153,7 @@ function ClassListPage() {
     }
 
     return (
-        <main className="mx-auto max-w-6xl px-4 py-8">
+        <main className="mx-auto max-w-6xl px-4 pb-24 pt-8">
             {/* 7. 윗부분: 키워드 모드는 제목, 나머지는 「홈 › 전체 클래스 › 카테고리명」 */}
             <div className="mb-6 border-b border-gray-200 pb-6">
                 {mode === 'keyword' ? (
