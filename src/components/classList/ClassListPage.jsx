@@ -84,10 +84,10 @@ function ClassListPage() {
     //    값이 없으면 null 대신 '' → 드롭다운(select)에 그대로 넘길 수 있게
     const keyword = (searchParams.get('keyword') ?? '').trim();
     // 카테고리는 목록에 있는 번호만 인정 (?category=abc, ?category=999 → 카테고리 없음 = 전체)
-    // 단, 목록을 다 받은 뒤에만 검사 (받는 중에는 주소 값 그대로 → 전체 목록으로 튕기지 않게)
+    // 단, 받는 중에는 검사하지 않음 (주소 값 그대로 → 전체 목록으로 튕기지 않게), 실패하면 확인할 수 없어 전체로
     const categoryParam = searchParams.get('category') ?? '';
     const selectedCategory = categories.find((item) => String(item.categoryId) === categoryParam);
-    const category = categoryState === 'done' && !selectedCategory ? '' : categoryParam;
+    const category = categoryState !== 'loading' && !selectedCategory ? '' : categoryParam;
     const classTypeParam = searchParams.get('classType');
     const classType = CLASS_TYPE_VALUES.includes(classTypeParam) ? classTypeParam : 'ALL';
     const region = classType === 'OFFLINE' ? (searchParams.get('region') ?? '') : ''; // 지역은 오프라인일 때만
