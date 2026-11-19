@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Check, Eye, EyeOff, FileText, Paperclip, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { API_BASE_URL } from '../../utils/auth.js';
+import TermsModal from '../common/TermsModal.jsx';
 
 // 증빙 자료 업로드 제한 상수 (강사 가입 전용)
 const MAX_FILE_COUNT = 5;
@@ -804,7 +805,7 @@ function Signup() {
                             </label>
                             <button
                                 type="button"
-                                onClick={() => setTermsModal('terms')}
+                                onClick={() => setTermsModal('SERVICE')}
                                 className="text-xs text-gray-500 hover:text-gray-800"
                             >
                                 보기
@@ -823,22 +824,31 @@ function Signup() {
                             </label>
                             <button
                                 type="button"
-                                onClick={() => setTermsModal('privacy')}
+                                onClick={() => setTermsModal('PRIVACY')}
                                 className="text-xs text-gray-500 hover:text-gray-800"
                             >
                                 보기
                             </button>
                         </div>
 
-                        <label className="flex cursor-pointer items-center gap-2.5">
-                            <input
-                                type="checkbox"
-                                checked={marketingAgree}
-                                onChange={(e) => setMarketingAgree(e.target.checked)}
-                                className="h-4 w-4 accent-brand"
-                            />
-                            <span>[선택] 마케팅 정보 수신 동의</span>
-                        </label>
+                        <div className="flex items-center justify-between">
+                            <label className="flex cursor-pointer items-center gap-2.5">
+                                <input
+                                    type="checkbox"
+                                    checked={marketingAgree}
+                                    onChange={(e) => setMarketingAgree(e.target.checked)}
+                                    className="h-4 w-4 accent-brand"
+                                />
+                                <span>[선택] 마케팅 정보 수신 동의</span>
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setTermsModal('MARKETING')}
+                                className="text-xs text-gray-500 hover:text-gray-800"
+                            >
+                                보기
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -917,27 +927,10 @@ function Signup() {
             )}
 
             {/* 약관 상세 보기 모달 */}
-            {termsModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-                        <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            {termsModal === 'terms' ? '이용약관' : '개인정보 수집 · 이용 동의'}
-                        </h2>
-                        <p className="mb-5 max-h-60 overflow-y-auto text-xs leading-relaxed text-gray-600">
-                            {termsModal === 'terms'
-                                ? 'ClassWay 서비스 이용약관 안내 내용입니다.'
-                                : 'ClassWay 개인정보 수집 및 이용 동의 안내 내용입니다.'}
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => setTermsModal(null)}
-                            className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-white hover:bg-brand/90"
-                        >
-                            닫기
-                        </button>
-                    </div>
-                </div>
-            )}
+            <TermsModal
+                termsType={termsModal}
+                onClose={() => setTermsModal(null)}
+            />
         </main>
     );
 }
