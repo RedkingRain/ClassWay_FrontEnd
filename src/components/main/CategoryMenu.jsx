@@ -2,33 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronRight, LayoutGrid } from 'lucide-react';
 import { mockCategories } from '../../mocks/categoryData.js';
-
-// 카테고리 아이콘 (피그마에서 SVG로 내보낸 파일)
-import drawingIcon from '../../assets/category-icons/drawing.svg';
-import craftIcon from '../../assets/category-icons/craft.svg';
-import bakingIcon from '../../assets/category-icons/baking.svg';
-import fitnessIcon from '../../assets/category-icons/fitness.svg';
-import musicIcon from '../../assets/category-icons/music.svg';
-import photoIcon from '../../assets/category-icons/photo.svg';
-import designIcon from '../../assets/category-icons/design.svg';
-import itIcon from '../../assets/category-icons/it.svg';
-import aiIcon from '../../assets/category-icons/ai.svg';
-import languageIcon from '../../assets/category-icons/language.svg';
-
-// 카테고리 번호 → 아이콘 파일 (화면 꾸미기용이라 프론트에서 정함)
-// 관리자가 새 카테고리를 추가하면 여기 없는 번호가 생김 → 기본 아이콘(LayoutGrid)으로 표시
-const CATEGORY_ICONS = {
-    1: drawingIcon,   // 드로잉
-    2: craftIcon,     // 공예 · DIY
-    3: bakingIcon,    // 베이킹 · 요리
-    4: fitnessIcon,   // 운동 · 라이프
-    5: musicIcon,     // 음악
-    6: photoIcon,     // 사진 · 영상
-    7: designIcon,    // 디자인
-    8: itIcon,        // IT
-    9: aiIcon,        // AI
-    10: languageIcon, // 외국어
-};
+import { getCategoryIcon } from "../../utils/categoryIcons.js";
 
 // 헤더의 「카테고리」 버튼 + 펼쳐지는 전체 카테고리 메뉴 (MAIN-001 · MAIN-002)
 function CategoryMenu() {
@@ -116,8 +90,8 @@ function CategoryMenu() {
                             {categories.length > 0 ? (
                                 <ul className="mt-5 grid grid-cols-5 gap-2">
                                     {categories.map((category) => {
-                                        // 번호에 맞는 아이콘 파일 (없으면 undefined → 아래에서 기본 아이콘)
-                                        const iconSrc = CATEGORY_ICONS[category.categoryId];
+                                        // 아이콘 주소 (iconUrl → 프론트 SVG, 둘 다 없으면 null → 아래에서 기본 아이콘)
+                                        const iconSrc = getCategoryIcon(category);
                                         return (
                                             <li key={category.categoryId}>
                                                 <Link

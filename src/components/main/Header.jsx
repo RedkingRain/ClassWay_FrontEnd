@@ -20,7 +20,7 @@ function Header() {
 
         if (trimmed) {
             // encodeURIComponent: 검색어에 &, ?, # 같은 기호가 있어도 주소가 깨지지 않게 변환
-            navigate(`/search?keyword=${encodeURIComponent(trimmed)}`);
+            navigate(`/classes?keyword=${encodeURIComponent(trimmed)}`);
         } else {
             // 검색어 없으면 전체 클래스 목록
             navigate('/classes');
