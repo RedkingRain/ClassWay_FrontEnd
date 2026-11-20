@@ -28,7 +28,7 @@ jobs: # 워크플로우에서 실행할 작업.
           # PR의 Files changed에 표시되는 diff를 받는다.
           gh pr diff "$PR_NUMBER" -R "$GITHUB_REPOSITORY" > "$RUNNER_TEMP/pr.diff"
           size=$(wc -c < "$RUNNER_TEMP/pr.diff") # 모델에 넘길 diff의 크기를 바이트로 잰다.
-          (( size > 0 && size <= 40000 )) # 빈 diff와 40,000바이트를 넘는 diff는 여기서 중단한다.
+          (( size > 0 && size <= 90000 )) # 빈 diff와 90,000바이트를 넘는 diff는 여기서 중단한다.
 
       - name: Install Copilot CLI # 검증에 사용한 공식 Linux 실행 파일을 설치한다.
         env: # 버전을 바꿀 때 아래 주소와 체크섬을 함께 갱신한다.
