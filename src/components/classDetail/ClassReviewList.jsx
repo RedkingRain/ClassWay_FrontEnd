@@ -3,9 +3,9 @@ import { Star, ChevronDown } from 'lucide-react';
 import { formatDate } from '../../utils/format.js';
 import { authFetch } from '../../utils/auth.js';
 
-const PAGE_SIZE = 5; // 한 번에 받아올 개수 (서버 기본값과 같음)
+// 서버 기본값과 같음
+const PAGE_SIZE = 5;
 
-// 별 5개 중 rating개 채우기
 function StarRating({ rating, size = 16 }) {
     return (
         <span className="flex items-center gap-0.5" aria-label={`별점 ${rating}점`}>
@@ -20,46 +20,40 @@ function StarRating({ rating, size = 16 }) {
     );
 }
 
-// 수강평 한 페이지 요청 (GET /classes/{classId}/reviews?sort=&page=&size=)
-// 컴포넌트 밖에 둔 이유: 화면이 다시 그려질 때마다 함수를 새로 만들지 않게
+// 화면이 다시 그려질 때마다 새로 만들지 않게 컴포넌트 밖에 둠
 async function fetchReviewPage(classId, sort, page) {
     const query = new URLSearchParams({ sort, page: String(page), size: String(PAGE_SIZE) });
     const response = await authFetch(`/classes/${encodeURIComponent(classId)}/reviews?${query}`, {
-        silentAuthError: true, // 비로그인도 보는 화면 → 토큰 문제로 로그인 페이지로 튕기지 않게
+        // 비로그인도 보는 화면이라 토큰 문제가 있어도 로그인 페이지로 보내지 않음
+        silentAuthError: true,
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) {
         throw new Error(result.message || '수강평을 불러오지 못했습니다.');
     }
-    return result.data; // { reviews, totalCount, hasNext }
+    return result.data;
 }
 
-// classId: 클래스 번호, avgRating: 상세 정보에서 받은 평균 별점
+// 수강평 탭 (CLASS-001), avgRating은 상세 정보에서 받은 평균 별점
 function ClassReviewList({ classId, avgRating }) {
-    // 정렬 기준 (latest: 최신순 / rating: 별점순)
     const [sort, setSort] = useState('latest');
-    // 지금까지 받아온 수강평 (더보기 누를 때마다 뒤에 붙음)
+    // 더보기를 누를 때마다 뒤에 붙음
     const [reviews, setReviews] = useState([]);
-    // 마지막으로 받아온 페이지 번호 (0부터)
     const [page, setPage] = useState(0);
-    // 숨김 · 삭제 뺀 전체 개수, 다음 페이지 여부
     const [totalCount, setTotalCount] = useState(0);
     const [hasNext, setHasNext] = useState(false);
-    // 지금 보여줘야 할 목록의 「이름표」 = 클래스 번호 + 정렬
+    // 클래스나 정렬이 바뀌면 이름표가 바뀌어서 첫 페이지부터 다시 받음
     const requestKey = `${classId}:${sort}`;
-    // 마지막으로 첫 페이지를 받은 이름표, 그때 실패했는지
     const [loadedKey, setLoadedKey] = useState(null);
     const [isError, setIsError] = useState(false);
-    // 첫 페이지 불러오기 상태: loading / done / error
-    // 이름표가 다르면 = 아직 새 첫 페이지를 기다리는 중
+    // 이름표가 다르면 아직 새 첫 페이지를 기다리는 중
     const loadState = loadedKey !== requestKey ? 'loading' : isError ? 'error' : 'done';
-    // 더보기 중인지, 더보기 실패 안내
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [loadMoreError, setLoadMoreError] = useState('');
 
-    // 처음 열 때 · 정렬 바꿀 때 → 첫 페이지부터 다시 받기
     useEffect(() => {
-        let ignore = false; // 늦게 온 예전 응답 무시 (상세 페이지와 같은 원리)
+        // 늦게 도착한 예전 응답은 무시함 (상세 페이지와 같은 방식)
+        let ignore = false;
 
         fetchReviewPage(classId, sort, 0)
             .then((data) => {
@@ -83,12 +77,12 @@ function ClassReviewList({ classId, avgRating }) {
     }, [classId, sort, requestKey]);
 
     function handleSortChange(event) {
-        setSort(event.target.value); // sort가 바뀌면 이름표가 바뀌어서 위 useEffect가 다시 실행됨
-        setLoadMoreError(''); // 예전 더보기 실패 문구 지우기
-        event.target.blur(); // 고른 뒤 선택 상태 해제 → 초록 테두리가 남지 않게
+        setSort(event.target.value);
+        setLoadMoreError('');
+        // 고른 뒤에도 초록 테두리가 남지 않게 선택 상태를 풀어 줌
+        event.target.blur();
     }
 
-    // 더보기 → 다음 페이지를 받아서 기존 목록 뒤에 붙이기
     async function handleLoadMore() {
         setIsLoadingMore(true);
         setLoadMoreError('');
@@ -114,14 +108,12 @@ function ClassReviewList({ classId, avgRating }) {
         return <p className="py-16 text-center text-gray-400">수강평을 불러오지 못했습니다.</p>;
     }
 
-    // 후기가 없을 때
     if (totalCount === 0) {
         return <p className="py-16 text-center text-gray-400">아직 작성된 후기가 없습니다.</p>;
     }
 
     return (
         <div>
-            {/* 요약 + 정렬 */}
             <div className="flex items-center justify-between border-b border-gray-200 pb-5">
                 <p className="flex items-center gap-3 text-lg font-semibold text-gray-900">
                     총 {totalCount.toLocaleString()}개
@@ -131,7 +123,6 @@ function ClassReviewList({ classId, avgRating }) {
                     </span>
                 </p>
 
-                {/* 정렬 선택 — 마우스 올리면 초록 테두리 */}
                 <div className="group relative w-32">
                     <select
                         value={sort}
@@ -149,14 +140,12 @@ function ClassReviewList({ classId, avgRating }) {
                 </div>
             </div>
 
-            {/* 후기 목록 */}
             <ul>
                 {reviews.map((review) => (
                     <li key={review.reviewId} className="border-b border-gray-200 py-6">
                         <p className="flex items-center gap-2 text-sm">
                             <span className="font-semibold text-gray-900">{review.writerNickname}</span>
                             <span className="text-xs text-gray-400">
-                                {/* 오프라인만 수업일 표시 */}
                                 {review.attendedAt && `${formatDate(review.attendedAt)} 수강 · `}
                                 {formatDate(review.createdAt)}
                             </span>
@@ -169,12 +158,10 @@ function ClassReviewList({ classId, avgRating }) {
                 ))}
             </ul>
 
-            {/* 더보기 실패 안내 */}
             {loadMoreError && (
                 <p role="alert" className="mt-4 text-center text-sm text-red-600">{loadMoreError}</p>
             )}
 
-            {/* 더보기 — 다음 페이지가 있을 때만 */}
             {hasNext && (
                 <button
                     type="button"

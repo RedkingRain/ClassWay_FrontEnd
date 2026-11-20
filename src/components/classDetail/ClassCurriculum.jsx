@@ -2,67 +2,58 @@ import { useState } from 'react';
 import { ChevronDown, Lock } from 'lucide-react';
 import { formatDuration } from '../../utils/format.js';
 
-// 숫자를 두 자리로 (1 → "01")
 function twoDigits(n) {
     return String(n).padStart(2, '0');
 }
 
-// 강의 한 줄 (온·오프라인 공통 모양)
-// showLock: 자물쇠 칸을 보여줄지 (온라인만 — 결제 전에는 모든 강의가 잠김)
+// 강의 한 줄, showLock은 결제 전 모든 강의가 잠기는 온라인에서만 true
 function LectureRow({ number, lecture, showLock }) {
     return (
         <li className="flex items-center py-3">
-            {/* 번호 */}
             <span className="w-12 shrink-0 font-semibold text-brand">{twoDigits(number)}</span>
 
-            {/* 강의 제목 */}
             <span className="flex-1 text-gray-800">{lecture.title}</span>
 
-            {/* 자물쇠 — 같은 폭의 칸에 넣어서 세로줄 맞춤 */}
+            {/* 자물쇠가 없는 줄도 세로줄이 맞게 같은 폭의 칸을 둠 */}
             {showLock && (
                 <span className="flex w-20 shrink-0 justify-end">
                     <Lock size={13} className="text-gray-400" aria-label="결제 후 수강 가능" />
                 </span>
             )}
 
-            {/* 시간 — 오른쪽 끝 정렬 */}
             <span className="w-14 shrink-0 text-right text-gray-500">{lecture.durationMinutes}분</span>
         </li>
     );
 }
 
-// classType: ONLINE / OFFLINE, chapters: 챕터 목록 (안에 강의 목록)
+// 커리큘럼 탭 (CLASS-001), 오프라인은 단계 목록, 온라인은 챕터를 접고 펼침
 function ClassCurriculum({ classType, chapters }) {
-    // 모든 강의를 한 줄로 펼친 목록 (개수·총 시간 계산용)
+    // 개수와 총 시간을 계산하려고 모든 강의를 한 목록으로 폄
     const allLectures = chapters.flatMap((chapter) => chapter.lectures);
     const totalMinutes = allLectures.reduce((sum, lecture) => sum + lecture.durationMinutes, 0);
-    // "총 약 3시간"은 어색해서 "총 3시간"으로
+    // 총 약 3시간은 어색해서 총 3시간으로 씀
     const totalText = formatDuration(totalMinutes).replace('약 ', '');
 
-    // 펼쳐진 챕터 번호 목록 기억 (처음엔 첫 챕터만)
+    // 처음에는 첫 챕터만 펼침
     const [openIds, setOpenIds] = useState(chapters.length > 0 ? [chapters[0].chapterId] : []);
     const isAllOpen = openIds.length === chapters.length;
 
-    // 챕터 하나 열기/닫기
     function toggleChapter(chapterId) {
         if (openIds.includes(chapterId)) {
-            setOpenIds(openIds.filter((id) => id !== chapterId)); // 열려 있으면 빼기 = 닫기
+            setOpenIds(openIds.filter((id) => id !== chapterId));
         } else {
-            setOpenIds([...openIds, chapterId]); // 닫혀 있으면 추가 = 열기
+            setOpenIds([...openIds, chapterId]);
         }
     }
 
-    // 전체 열기 / 전체 닫기
     function toggleAll() {
         setOpenIds(isAllOpen ? [] : chapters.map((chapter) => chapter.chapterId));
     }
 
-    // 커리큘럼이 아직 없을 때
     if (allLectures.length === 0) {
         return <p className="py-10 text-center text-sm text-gray-400">등록된 커리큘럼이 없습니다.</p>;
     }
 
-    // ───── 오프라인: 단계 목록 ─────
     if (classType === 'OFFLINE') {
         return (
             <div className="rounded-2xl border border-gray-200">
@@ -83,10 +74,8 @@ function ClassCurriculum({ classType, chapters }) {
         );
     }
 
-    // ───── 온라인: 챕터 접고 펼치기 ─────
     return (
         <div className="rounded-2xl border border-gray-200">
-            {/* 제목 줄 */}
             <div className="flex items-center justify-between border-b border-gray-200 px-7 py-6">
                 <h3 className="text-lg font-semibold text-gray-900">
                     커리큘럼
@@ -103,13 +92,12 @@ function ClassCurriculum({ classType, chapters }) {
                 </button>
             </div>
 
-            {/* 챕터 목록 */}
             <ul>
                 {chapters.map((chapter, chapterIndex) => {
                     const isOpen = openIds.includes(chapter.chapterId);
                     return (
                         <li key={chapter.chapterId} className="border-b border-gray-200 last:border-b-0">
-                            {/* 바깥 여백(p-3) → 열린 챕터 배경이 테두리에서 살짝 떨어진 둥근 박스로 보이게 */}
+                            {/* 열린 챕터 배경이 테두리에서 살짝 떨어진 둥근 상자로 보이게 바깥 여백을 둠 */}
                             <div className="p-3">
                                 <button
                                     type="button"
@@ -132,7 +120,6 @@ function ClassCurriculum({ classType, chapters }) {
                                 </button>
                             </div>
 
-                            {/* 펼쳤을 때만 강의 목록 */}
                             {isOpen && (
                                 <ol className="px-8 pb-4">
                                     {chapter.lectures.map((lecture, lectureIndex) => (

@@ -50,3 +50,8 @@ export function formatRelativeTime(value) {
     const day = String(date.getDate()).padStart(2, '0');
     return `${month}.${day}`;
 }
+
+// 할인율이 0이면 할인가가 들어 있어도 할인 표시를 하지 않음 (카드, 상세 예약 상자에서 같이 사용)
+export function isDiscounted({ discountRate, salePrice }) {
+    return discountRate > 0 && salePrice !== null;
+}

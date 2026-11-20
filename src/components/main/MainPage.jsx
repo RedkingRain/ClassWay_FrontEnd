@@ -21,7 +21,7 @@ function MainPage() {
             {/* MAIN-003 이벤트 중인 클래스 (4개 미만이면 숨김) */}
             <EventClassSection />
 
-            {/* MAIN-003 전체 클래스 (더보기 → /classes) */}
+            {/* MAIN-003 전체 클래스 */}
             <AllClassSection />
 
             {/* MAIN-004 수강 후기 */}
