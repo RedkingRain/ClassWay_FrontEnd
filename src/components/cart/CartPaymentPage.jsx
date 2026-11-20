@@ -4,6 +4,7 @@ import { X, ChevronDown, AlertCircle, ShoppingBag } from 'lucide-react';
 import { authFetch } from '../../utils/auth.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { TOSS_CLIENT_KEY } from '../../config/tossPayments.js';
+import TermsModal from '../common/TermsModal.jsx';
 
 export default function CartPaymentPage() {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function CartPaymentPage() {
     // 약관 동의 및 제출 상태
     const [isAgreed, setIsAgreed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [termsModal, setTermsModal] = useState(null);
 
     // 2. 초기 데이터 로드 (장바구니 목록 & 사용자 정보)
     useEffect(() => {
@@ -709,17 +711,26 @@ export default function CartPaymentPage() {
                             </div>
 
                             {/* 필수 약관 동의 */}
-                            <label className="flex items-start gap-2 text-xs text-gray-600 cursor-pointer pt-2">
-                                <input
-                                    type="checkbox"
-                                    checked={isAgreed}
-                                    onChange={(e) => setIsAgreed(e.target.checked)}
-                                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-emerald-800 cursor-pointer"
-                                />
-                                <span>
-                                    <strong>[필수]</strong> 주문 내용을 확인하였으며 결제 진행 및 취소·환불 규정에 동의합니다.
-                                </span>
-                            </label>
+                            <div className="flex items-start justify-between gap-2 pt-2">
+                                <label className="flex items-start gap-2 text-xs text-gray-600 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAgreed}
+                                        onChange={(e) => setIsAgreed(e.target.checked)}
+                                        className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-emerald-800 cursor-pointer"
+                                    />
+                                    <span>
+                                        <strong>[필수]</strong> 주문 내용을 확인하였으며 결제 진행 및 취소·환불 규정에 동의합니다.
+                                    </span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setTermsModal('ORDER_PAY')}
+                                    className="shrink-0 text-xs text-gray-500 hover:text-gray-800"
+                                >
+                                    보기
+                                </button>
+                            </div>
 
                             {/* 결제하기 버튼 */}
                             <button
@@ -740,6 +751,12 @@ export default function CartPaymentPage() {
                     </div>
                 </div>
             )}
+
+            {/* 약관 상세 보기 모달 */}
+            <TermsModal
+                termsType={termsModal}
+                onClose={() => setTermsModal(null)}
+            />
         </div>
     );
 }
