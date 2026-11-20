@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronRight, LayoutGrid } from 'lucide-react';
 import { getCategoryIcon } from '../../utils/categoryIcons.js';
-import { useCategories } from '../../utils/classApi.js';
+import { useCategories } from '../../utils/api.js';
 
 // 헤더의 「카테고리」 버튼 + 펼쳐지는 전체 카테고리 메뉴 (MAIN-001 · MAIN-002)
 function CategoryMenu() {

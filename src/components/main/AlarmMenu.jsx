@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { authFetch } from '../../utils/auth.js';
 import { formatRelativeTime } from '../../utils/format.js';
+import { isSafeInternalLink } from '../../utils/link.js';
 
 // 키는 ERD alarms.type 값
 const TYPE_LABELS = {
@@ -11,11 +12,6 @@ const TYPE_LABELS = {
     QNA: '문의',
     NOTICE: '안내',
 };
-
-// 알림 주소가 잘못 저장돼도 다른 사이트나 javascript: 주소로 가지 않게 사이트 안 주소만 허용함
-function isSafeInternalLink(url) {
-    return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//');
-}
 
 async function fetchAlarms() {
     const response = await authFetch('/alarms', { silentAuthError: true });

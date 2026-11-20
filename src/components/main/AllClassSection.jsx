@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import ClassCard from '../common/ClassCard.jsx';
 import ClassTypeTabs from '../common/ClassTypeTabs.jsx';
-import { useClassCards } from '../../utils/classApi.js';
+import { useApiData } from '../../utils/api.js';
 
 // 4개씩 2줄이라 8개
 const MAIN_CLASS_COUNT = 8;
@@ -19,7 +19,7 @@ function AllClassSection() {
     }
     const path = `/classes?${query}`;
 
-    const { state, data, previousData } = useClassCards(path);
+    const { state, data, previousData } = useApiData(path);
 
     // 새 결과를 기다리는 동안은 이전 탭 결과를 보여줌 (화면 높이가 줄었다 늘어나는 것 방지)
     const shownData = state === 'loading' ? previousData : data;

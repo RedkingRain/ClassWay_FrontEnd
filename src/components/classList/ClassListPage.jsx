@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import ClassCard from '../common/ClassCard.jsx';
 import CategoryIconRow from '../common/CategoryIconRow.jsx';
 import ClassListFilters from './ClassListFilters.jsx';
-import { useCategories, useClassCards } from '../../utils/classApi.js';
+import { useApiData, useCategories } from '../../utils/api.js';
 
 const PAGE_SIZE = 20; // 한 페이지 개수 (4열 × 5줄)
 const PAGE_GROUP = 5; // 페이지 번호를 몇 개씩 묶어 보여줄지 (1~5, 6~10)
@@ -107,7 +107,7 @@ function ClassListPage() {
     if (region) query.set('region', region);
 
     // 4. 요청 + 결과 (주소가 바뀌면 다시 요청, 기다리는 동안은 이전 결과를 흐리게)
-    const { state, data, previousData } = useClassCards(`/classes?${query}`);
+    const { state, data, previousData } = useApiData(`/classes?${query}`);
     const shownData = state === 'loading' ? previousData : data;
     const classes = shownData?.classes ?? [];
     const totalCount = shownData?.totalCount ?? 0;
