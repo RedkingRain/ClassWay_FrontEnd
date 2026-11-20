@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronRight, LayoutGrid } from 'lucide-react';
-import { mockCategories } from '../../mocks/categoryData.js';
-import { getCategoryIcon } from "../../utils/categoryIcons.js";
+import { getCategoryIcon } from '../../utils/categoryIcons.js';
+import { useCategories } from '../../utils/classApi.js';
 
 // 헤더의 「카테고리」 버튼 + 펼쳐지는 전체 카테고리 메뉴 (MAIN-001 · MAIN-002)
 function CategoryMenu() {
@@ -11,8 +11,8 @@ function CategoryMenu() {
     // 메뉴 전체(버튼 + 펼친 영역)를 가리키는 표시 → "바깥 클릭"인지 판단할 때 씀
     const menuRef = useRef(null);
 
-    // 카테고리 목록 (나중에 API 호출로 교체)
-    const categories = mockCategories;
+    // 카테고리 목록 (GET /categories, 클래스 목록 화면과 요청 1번을 같이 씀)
+    const { state: categoryState, data: categories } = useCategories();
 
     // 메뉴가 열려 있을 때만: 바깥 클릭 · ESC 키로 닫기
     useEffect(() => {
@@ -74,7 +74,9 @@ function CategoryMenu() {
                             <div className="flex items-center justify-between">
                                 <p className="text-base font-semibold text-gray-900">
                                     전체 카테고리
-                                    <span className="ml-1.5 text-sm font-medium text-brand">{categories.length}</span>
+                                    {categoryState === 'done' && (
+                                        <span className="ml-1.5 text-sm font-medium text-brand">{categories.length}</span>
+                                    )}
                                 </p>
                                 <Link
                                     to="/classes"
@@ -86,11 +88,15 @@ function CategoryMenu() {
                                 </Link>
                             </div>
 
-                            {/* 카테고리 5 × 2 격자 */}
-                            {categories.length > 0 ? (
+                            {/* 카테고리 5 × 2 격자 (받는 중, 실패, 없음은 안내 문구) */}
+                            {categoryState === 'loading' ? (
+                                <p className="mt-5 text-sm text-gray-400">카테고리를 불러오는 중...</p>
+                            ) : categoryState === 'error' ? (
+                                <p className="mt-5 text-sm text-gray-400">카테고리를 불러오지 못했습니다.</p>
+                            ) : categories.length > 0 ? (
                                 <ul className="mt-5 grid grid-cols-5 gap-2">
                                     {categories.map((category) => {
-                                        // 아이콘 주소 (iconUrl → 프론트 SVG, 둘 다 없으면 null → 아래에서 기본 아이콘)
+                                        // 아이콘 주소 (iconUrl → 없으면 null → 아래에서 기본 아이콘)
                                         const iconSrc = getCategoryIcon(category);
                                         return (
                                             <li key={category.categoryId}>

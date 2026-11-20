@@ -3,7 +3,7 @@ import { LayoutGrid } from 'lucide-react';
 import { getCategoryIcon } from '../../utils/categoryIcons.js';
 
 // 「전체 + 카테고리 아이콘」 한 줄 (클래스 목록 MAIN-002, 나중에 메인 카테고리 영역에서도 사용)
-// categories: 카테고리 목록 (지금은 mockCategories, 나중에 GET /categories 응답)
+// categories: 카테고리 목록 (GET /categories 응답)
 // selectedId: 고른 카테고리 번호 (주소 ?category= 값이라 글자일 수 있음, 없으면 「전체」가 선택됨)
 function CategoryIconRow({ categories, selectedId }) {
     // 1. 한 줄에 그릴 칸 = 맨 앞 「전체」 + 카테고리들
