@@ -1,9 +1,9 @@
 import ClassSlider from './ClassSlider.jsx';
-import { useClassCards } from '../../utils/classApi.js';
+import { useApiData } from '../../utils/api.js';
 
 // 메인 인기 클래스 TOP 10 (MAIN-003)
 function PopularClassSection() {
-    const { state, data } = useClassCards('/classes/popular');
+    const { state, data } = useApiData('/classes/popular');
     const classes = data ?? [];
 
     // 불러오는 중, 실패, 0개일 때는 빈 영역 대신 섹션을 숨김

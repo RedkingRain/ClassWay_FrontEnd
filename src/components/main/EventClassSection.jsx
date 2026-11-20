@@ -1,12 +1,12 @@
 import ClassSlider from './ClassSlider.jsx';
-import { useClassCards } from '../../utils/classApi.js';
+import { useApiData } from '../../utils/api.js';
 
 // 와이어프레임 기준으로 이벤트 클래스가 4개보다 적으면 섹션을 숨김
 const MIN_EVENT_COUNT = 4;
 
 // 메인 이벤트 중인 클래스 (MAIN-003)
 function EventClassSection() {
-    const { state, data } = useClassCards('/classes/events');
+    const { state, data } = useApiData('/classes/events');
     const classes = data ?? [];
 
     if (state !== 'done' || classes.length < MIN_EVENT_COUNT) {
