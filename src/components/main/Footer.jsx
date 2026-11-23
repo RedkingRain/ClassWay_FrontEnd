@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { NOTICE_URL, FAQ_URL } from '../../config/supportLinks.js';
 
 function Footer() {
     return (
@@ -6,11 +7,12 @@ function Footer() {
             <div className="mx-auto max-w-6xl px-4 py-10">
                 <nav aria-label="고객지원 및 정책">
                     <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-200">
-                        <li><Link to="/notice" className="hover:text-white">공지사항</Link></li>
-                        <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
-                        <li><Link to="/support" className="hover:text-white">고객센터</Link></li>
-                        <li><Link to="/terms" className="hover:text-white">이용약관</Link></li>
-                        <li><Link to="/privacy" className="hover:text-white">개인정보처리방침</Link></li>
+                        {/* 공지사항, FAQ는 노션 공개 페이지라 새 창으로 엶 */}
+                        <li><a href={NOTICE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white">공지사항</a></li>
+                        <li><a href={FAQ_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white">FAQ</a></li>
+                        <li><Link to="/support/inquiry" className="hover:text-white">고객센터</Link></li>
+                        <li><Link to="/terms?tab=service" className="hover:text-white">이용약관</Link></li>
+                        <li><Link to="/terms?tab=privacy" className="hover:text-white">개인정보처리방침</Link></li>
                     </ul>
                 </nav>
 
