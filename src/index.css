@@ -16,3 +16,12 @@
         cursor: pointer;
     }
 }
+
+/* Tiptap 빈 에디터 안내 문구 (Placeholder가 data-placeholder에 넣어 준 글을 보여 줌) */
+.tiptap p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: #9ca3af;
+}
