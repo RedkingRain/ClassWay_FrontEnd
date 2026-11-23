@@ -30,10 +30,12 @@ function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }
         },
     });
 
-    // 부모가 값을 ''로 비우면(등록 완료 뒤) 에디터 안 글도 지움
+    // 부모 값이 바뀌면(불러오기, 비우기) 에디터에 반영. 입력 중에는 value가 에디터 내용과 같아서 덮어쓰지 않음
     useEffect(() => {
-        if (editor && value === '' && !editor.isEmpty) {
-            editor.commands.clearContent();
+        if (!editor) return;
+        const current = editor.isEmpty ? '' : editor.getHTML();
+        if ((value ?? '') !== current) {
+            editor.commands.setContent(value ?? '', { emitUpdate: false });
         }
     }, [editor, value]);
 
