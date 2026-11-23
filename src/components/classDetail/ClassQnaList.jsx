@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { formatDate } from '../../utils/format.js';
 import { authFetch } from '../../utils/auth.js';
+import { fetchApiData } from '../../utils/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import ConfirmModal from '../common/ConfirmModal.jsx';
 
@@ -11,24 +12,16 @@ const PAGE_SIZE = 5;
 // 서버 검사와 같은 길이
 const MAX_LENGTH = 1000;
 
-// 화면이 다시 그려질 때마다 새로 만들지 않게 컴포넌트 밖에 둠
-async function fetchQnaPage(classId, page) {
+// 비로그인도 보는 목록이라 공용 목록 요청 함수를 그대로 씀
+function fetchQnaPage(classId, page) {
     const query = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
-    const response = await authFetch(`/classes/${encodeURIComponent(classId)}/qnas?${query}`, {
-        // 비로그인도 보는 화면이라 토큰 문제가 있어도 로그인 페이지로 보내지 않음
-        silentAuthError: true,
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.success) {
-        throw new Error(result.message || '문의를 불러오지 못했습니다.');
-    }
-    return result.data;
+    return fetchApiData(`/classes/${encodeURIComponent(classId)}/qnas?${query}`);
 }
 
 // 목록이 올 때까지 글 자리를 회색 상자로 미리 보여 줌
 function QnaSkeleton() {
     return (
-        <div className="animate-pulse" aria-label="문의 불러오는 중">
+        <div role="status" aria-label="문의 불러오는 중" className="animate-pulse">
             <div className="h-6 w-24 rounded bg-gray-200" />
             <ul className="mt-5 border-t border-gray-200">
                 {[1, 2, 3].map((n) => (
@@ -99,7 +92,11 @@ function ClassQnaList({ classId }) {
         try {
             const nextPage = page + 1;
             const data = await fetchQnaPage(classId, nextPage);
-            setQnas((prev) => [...prev, ...data.qnas]);
+            // 페이지 사이에 새 문의가 등록되면 한 칸씩 밀려 같은 글이 또 올 수 있어서 이미 있는 글은 뺌
+            setQnas((prev) => [
+                ...prev,
+                ...data.qnas.filter((qna) => !prev.some((p) => p.qnaId === qna.qnaId)),
+            ]);
             setTotalCount(data.totalCount);
             setHasNext(data.hasNext);
             setPage(nextPage);
@@ -136,6 +133,7 @@ function ClassQnaList({ classId }) {
             }
             setQuestion('');
             setIsSecret(false);
+            setLoadMoreError('');
             setReloadCount((prev) => prev + 1);
         } catch {
             // 서버 문구는 앞에 칸 이름이 붙어 있어서 화면 문구를 직접 씀, 입력한 글은 남겨 둠
@@ -231,9 +229,10 @@ function ClassQnaList({ classId }) {
                             setSubmitError('');
                         }}
                         maxLength={MAX_LENGTH}
+                        disabled={isSubmitting}
                         rows={4}
                         placeholder="클래스에 대해 궁금한 점을 남겨 주세요"
-                        className="w-full resize-none rounded-lg border border-gray-300 p-4 pb-8 text-sm text-gray-800 focus:border-brand focus:outline-none"
+                        className="w-full resize-none rounded-lg border border-gray-300 p-4 pb-8 text-sm text-gray-800 focus:border-brand focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     <span className="pointer-events-none absolute bottom-3 right-4 text-xs text-gray-400">
                         {question.length}/{MAX_LENGTH}
@@ -248,6 +247,7 @@ function ClassQnaList({ classId }) {
                             type="checkbox"
                             checked={isSecret}
                             onChange={(event) => setIsSecret(event.target.checked)}
+                            disabled={isSubmitting}
                             className="h-4 w-4 accent-brand"
                         />
                         비밀글로 작성
