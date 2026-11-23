@@ -50,7 +50,7 @@ function ClassDetailTabs({ detail }) {
                         avgRating={detail.avgRating}
                     />
                 )}
-                {activeTab === 'qna' && <ClassQnaList classId={detail.classId} />}
+                {activeTab === 'qna' && <ClassQnaList key={detail.classId} classId={detail.classId} />}
             </div>
         </section>
     );
