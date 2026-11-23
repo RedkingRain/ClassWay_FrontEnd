@@ -7,7 +7,7 @@ function ReviewSection() {
     const { state, data } = useApiData('/reviews/main');
     const reviews = data ?? [];
 
-    // 3칸 줄이 비어 보이지 않게 0개면 섹션 숨김
+    // 불러오는 중, 실패, 0개일 때는 섹션을 숨김
     if (state !== 'done' || reviews.length === 0) {
         return null;
     }
