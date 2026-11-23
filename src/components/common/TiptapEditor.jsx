@@ -4,6 +4,11 @@ import StarterKit from '@tiptap/starter-kit';
 import { CharacterCount, Placeholder } from '@tiptap/extensions';
 import { Bold, Italic, List, ListOrdered } from 'lucide-react';
 
+// 공백만 있어도 빈 글로 봄 (<p> </p>가 빈 칸 검사를 통과하지 않게)
+function toValue(editor) {
+    return editor.getText().trim() ? editor.getHTML() : '';
+}
+
 // 팀 공용 글쓰기 에디터 (내용은 HTML 글자로 주고받음, 비어 있으면 '')
 function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }) {
     const editor = useEditor({
@@ -26,14 +31,14 @@ function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }
         },
         // 빈 에디터도 <p></p>를 주기 때문에 부모가 빈 칸 검사를 쉽게 하도록 ''로 바꿔 줌
         onUpdate: ({ editor: current }) => {
-            onChange(current.isEmpty ? '' : current.getHTML());
+            onChange(toValue(current));
         },
     });
 
     // 부모 값이 바뀌면(불러오기, 비우기) 에디터에 반영. 입력 중에는 value가 에디터 내용과 같아서 덮어쓰지 않음
     useEffect(() => {
         if (!editor) return;
-        const current = editor.isEmpty ? '' : editor.getHTML();
+        const current = toValue(editor);
         if ((value ?? '') !== current) {
             editor.commands.setContent(value ?? '', { emitUpdate: false });
         }
