@@ -55,3 +55,9 @@ export function formatRelativeTime(value) {
 export function isDiscounted({ discountRate, salePrice }) {
     return discountRate > 0 && salePrice !== null;
 }
+
+// 파일 크기 2048 → "2KB", 1572864 → "1.5MB" (1MB보다 작으면 KB로, 0KB로 보이지 않게 최소 1KB)
+export function formatFileSize(bytes) {
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))}KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
