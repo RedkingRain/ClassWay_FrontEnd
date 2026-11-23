@@ -185,7 +185,7 @@ function ClassQnaList({ classId }) {
                                     )}
                                 </p>
 
-                                {qna.answer && (
+                                {qna.canView && qna.answer && (
                                     <div className="mt-4 flex gap-3 rounded-lg bg-gray-50 p-4">
                                         <span className="font-semibold text-brand">A.</span>
                                         <div>
