@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { X, ChevronDown, AlertCircle, ShoppingBag } from 'lucide-react';
 import { authFetch } from '../../utils/auth.js';
@@ -25,9 +25,22 @@ export default function CartPaymentPage() {
     const userTotalPoint = 4500; // 포인트 조회 API 미구현 (UI 예시값)
 
     // 약관 동의 및 제출 상태
+    const [paymentMethod, setPaymentMethod] = useState('CARD');
     const [isAgreed, setIsAgreed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [termsModal, setTermsModal] = useState(null);
+
+    // 토스 결제창 10분 유효시간 타이머 Ref
+    const paymentTimeoutRef = useRef(null);
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    useEffect(() => {
+        return () => {
+            if (paymentTimeoutRef.current) {
+                clearTimeout(paymentTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // 2. 초기 데이터 로드 (장바구니 목록 & 사용자 정보)
     useEffect(() => {
@@ -264,61 +277,64 @@ export default function CartPaymentPage() {
             const { orderNo, orderName, amount, customerName, customerEmail } = result.data;
             currentOrderNo = orderNo;
 
-            // (3) 토스페이먼츠 v2 결제창형(Payment Window) 모달 팝업 호출
+            // (3) 결제창 장기 방치(오프라인 정원 선점) 방지를 위한 10분 타이머 시작
+            if (paymentTimeoutRef.current) {
+                clearTimeout(paymentTimeoutRef.current);
+            }
+            const PAYMENT_TIMEOUT_MS = 10 * 60 * 1000; // 10분 (600,000ms)
+            paymentTimeoutRef.current = setTimeout(() => {
+                const expireCode = encodeURIComponent('ORDER_EXPIRED');
+                const expireMsg = encodeURIComponent(
+                    '결제 유효시간(10분)이 만료되었습니다. 다시 시도해 주세요.'
+                );
+                // 토스 결제창 iframe 오버레이를 완전히 제거하기 위해 window.location.replace로 이동
+                window.location.replace(
+                    `/payment/fail?code=${expireCode}&message=${expireMsg}&orderId=${encodeURIComponent(orderNo)}`
+                );
+            }, PAYMENT_TIMEOUT_MS);
+
+            // (4) 토스페이먼츠 v2 일반 결제창(payment.requestPayment) 호출 (API 개별 연동 키 사용)
             const tossPayments = window.TossPayments(TOSS_CLIENT_KEY);
-            const customerKey = userInfo?.email || user?.userId?.toString() || window.TossPayments.ANONYMOUS;
-            const widgets = tossPayments.widgets({ customerKey });
+            const customerKey =
+                user?.userId ? `USER_${user.userId}` : window.TossPayments.ANONYMOUS;
+            const payment = tossPayments.payment({ customerKey });
 
-            // 금액 설정
-            await widgets.setAmount({
-                currency: 'KRW',
-                value: amount,
-            });
-
-            // 결제창형(팝업 모달) UI 렌더링
-            const paymentWindow = await widgets.renderPaymentWindow({
+            await payment.requestPayment({
+                method: paymentMethod,
+                amount: {
+                    currency: 'KRW',
+                    value: amount,
+                },
+                orderId: orderNo,
                 orderName: orderName,
-            });
-
-            // 구매자가 결제창에서 결제수단을 고르고 결제하기를 누르면 호출
-            paymentWindow.on("paymentRequest", async () => {
-                try {
-                    // 결제 요청 (결제수단 선택 팝업창 호출)
-                    await widgets.requestPayment({
-                        orderId: orderNo,
-                        orderName: orderName,
-                        successUrl: `${window.location.origin}/payment/success`,
-                        failUrl: `${window.location.origin}/payment/fail`,
-                        customerEmail: customerEmail || userInfo?.email || '',
-                        customerName: customerName || userInfo?.name || '',
-                    });
-                } catch (error) {
-                    console.error('결제 실패 : ', error);
-                }
-            });
-
-            // 구매자가 결제창을 닫거나 결제를 포기할 때 호출
-            paymentWindow.on("cancel", async () => {
-                try {
-                    // 사용자가 결제창을 닫거나 취소한 경우 백엔드 대기 주문 데이터 정리 API 호출
-                    if (currentOrderNo) {
-                        await ready_data_clean(currentOrderNo);
-                    }
-                } catch (error) {
-                    console.error('결제 진행 실패 또는 취소 : ', error);
-                }
+                successUrl: `${window.location.origin}/payment/success`,
+                failUrl: `${window.location.origin}/payment/fail`,
+                customerEmail: customerEmail || userInfo?.email || '',
+                customerName: customerName || userInfo?.name || '',
             });
         } catch (error) {
             console.error('결제 요청 실패 또는 취소:', error);
 
-            // 결제 진행 중 에러가 발생한 경우 백엔드 대기 주문 데이터 정리 API 호출
-            if (currentOrderNo) {
-                await ready_data_clean(currentOrderNo);
+            // 사용자가 직접 결제창을 닫거나 에러가 난 경우 10분 타이머 즉시 해제
+            if (paymentTimeoutRef.current) {
+                clearTimeout(paymentTimeoutRef.current);
+                paymentTimeoutRef.current = null;
             }
 
-            if (error?.code !== 'USER_CANCEL') {
-                alert(error?.message || '결제 진행 중 오류가 발생했습니다.');
+            // 주문번호가 발급된 상태에서 결제창 닫기(USER_CANCEL) 또는 에러가 발생한 경우
+            // /payment/fail 페이지로 이동시켜 cancel_order 호출 및 시안 화면(결제창 취소 / 결제 실패)을 표시
+            if (currentOrderNo) {
+                const code = encodeURIComponent(error?.code || 'USER_CANCEL');
+                const message = encodeURIComponent(
+                    error?.message || '결제창을 닫아 결제가 완료되지 않았습니다.'
+                );
+                navigate(
+                    `/payment/fail?code=${code}&message=${message}&orderId=${encodeURIComponent(currentOrderNo)}`
+                );
+                return;
             }
+
+            alert(error?.message || '결제 진행 중 오류가 발생했습니다.');
         } finally {
             setIsSubmitting(false);
         }
@@ -668,6 +684,42 @@ export default function CartPaymentPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* 결제 수단 선택 섹션 */}
+                        <div className="rounded-xl border border-gray-200 bg-white p-5">
+                            <h2 className="text-base font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                                결제 수단
+                            </h2>
+                            <div className="grid grid-cols-3 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('CARD')}
+                                    className={`rounded-lg border py-3 text-sm font-semibold transition ${
+                                        paymentMethod === 'CARD'
+                                            ? 'border-emerald-800 bg-emerald-50/50 text-emerald-900'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    신용·체크카드
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="현재 카드 결제만 지원합니다."
+                                    className="cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 py-3 text-sm font-medium text-gray-400"
+                                >
+                                    가상계좌 (준비 중)
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="현재 카드 결제만 지원합니다."
+                                    className="cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 py-3 text-sm font-medium text-gray-400"
+                                >
+                                    휴대폰 결제 (준비 중)
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 우측 결제 요약 영역 (Sticky) */}
@@ -759,18 +811,4 @@ export default function CartPaymentPage() {
             />
         </div>
     );
-}
-
-
-
-async function ready_data_clean(orderId) {
-    // 대기 주문 데이터 정리
-    try {
-        await authFetch('/payment/cancel_order', {
-            method: 'POST',
-            body: JSON.stringify({ order_no: orderId }),
-        });
-    } catch (cancelErr) {
-        console.error('대기 주문 정리 실패:', cancelErr);
-    }
 }
