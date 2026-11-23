@@ -209,7 +209,7 @@ function ClassQnaList({ classId }) {
                         <button
                             type="button"
                             onClick={handleLoadMore}
-                            disabled={isLoadingMore}
+                            disabled={isLoadingMore || isSubmitting}
                             className="mt-6 w-full rounded-lg border border-gray-300 py-3 text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isLoadingMore ? '불러오는 중...' : '문의 더보기'}
@@ -254,7 +254,7 @@ function ClassQnaList({ classId }) {
                     </label>
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isLoadingMore}
                         className="rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isSubmitting ? '등록 중...' : '등록'}
