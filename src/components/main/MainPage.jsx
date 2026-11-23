@@ -4,6 +4,7 @@ import EventClassSection from './EventClassSection.jsx';
 import AllClassSection from './AllClassSection.jsx';
 import CategoryIconRow from '../common/CategoryIconRow.jsx';
 import { useCategories } from '../../utils/api.js';
+import ReviewSection from './ReviewSection.jsx';
 
 function MainPage() {
     // 카테고리 목록 (GET /categories, 헤더 메뉴와 요청 1번을 같이 씀)
@@ -31,9 +32,7 @@ function MainPage() {
             <AllClassSection />
 
             {/* MAIN-004 수강 후기 */}
-            <section>
-                <p>수강 후기 영역</p>
-            </section>
+            <ReviewSection />
         </main>
     );
 }
