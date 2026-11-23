@@ -26,10 +26,17 @@ function TermsPage() {
     );
 
     const versionList = versions.state === 'done' ? versions.data : [];
-    const versionOptions = versionList.map((version, index) => ({
+    const versionOptions = versionList.map((version) => ({
         value: String(version.id),
-        label: `${formatDate(version.effectiveDate)} 시행${index === 0 ? ' (현재)' : ''}`,
+        label: `${formatDate(version.effectiveDate)} 시행${
+            version.status === 'CURRENT' ? ' (현재)' : version.status === 'UPCOMING' ? ' (시행 예정)' : ''
+        }`,
     }));
+    const currentVersion = versionList.find((version) => version.status === 'CURRENT');
+    const selectedId = versionId ?? (currentVersion ? String(currentVersion.id) : '');
+    const isUpcoming = versionList.some(
+        (version) => String(version.id) === selectedId && version.status === 'UPCOMING'
+    );
 
     function handleVersionChange(id) {
         setSearchParams({ tab: tab.key, version: id });
@@ -62,7 +69,7 @@ function TermsPage() {
                 {versionOptions.length > 0 && (
                     <Dropdown
                         options={versionOptions}
-                        value={versionId ?? versionOptions[0].value}
+                        value={selectedId}
                         onChange={handleVersionChange}
                         label="시행일 선택"
                         placeholder="시행일 선택"
@@ -85,7 +92,10 @@ function TermsPage() {
             {terms.state === 'done' && (
                 <article className="mt-8">
                     <h2 className="text-xl font-semibold text-gray-900">{terms.data.title}</h2>
-                    <p className="mt-1 text-sm text-gray-500">시행일 {formatDate(terms.data.effectiveDate)}</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                        시행일 {formatDate(terms.data.effectiveDate)}
+                        {isUpcoming && <span className="ml-2 font-semibold text-point">시행 예정</span>}
+                    </p>
                     <div
                         // 관리자가 쓴 HTML 태그에는 className을 붙일 수 없어서 바깥에서 안쪽 태그 모양을 정함
                         className="mt-6 text-sm leading-relaxed text-gray-700
