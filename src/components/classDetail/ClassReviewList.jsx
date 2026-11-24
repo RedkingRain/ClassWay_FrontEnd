@@ -20,6 +20,27 @@ function StarRating({ rating, size = 16 }) {
     );
 }
 
+// 후기가 올 때까지 글 자리를 회색 상자로 미리 보여 줌
+function ReviewSkeleton() {
+    return (
+        <div role="status" aria-label="수강평 불러오는 중" className="animate-pulse">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-5">
+                <div className="h-6 w-28 rounded bg-gray-200" />
+                <div className="h-10 w-32 rounded-lg bg-gray-200" />
+            </div>
+            <ul>
+                {[1, 2, 3].map((n) => (
+                    <li key={n} className="border-b border-gray-200 py-6">
+                        <div className="h-4 w-40 rounded bg-gray-200" />
+                        <div className="mt-2 h-4 w-24 rounded bg-gray-200" />
+                        <div className="mt-3 h-5 w-3/4 rounded bg-gray-200" />
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 // 화면이 다시 그려질 때마다 새로 만들지 않게 컴포넌트 밖에 둠
 async function fetchReviewPage(classId, sort, page) {
     const query = new URLSearchParams({ sort, page: String(page), size: String(PAGE_SIZE) });
@@ -89,7 +110,11 @@ function ClassReviewList({ classId, avgRating }) {
         try {
             const nextPage = page + 1;
             const data = await fetchReviewPage(classId, sort, nextPage);
-            setReviews((prev) => [...prev, ...data.reviews]);
+            // 페이지 사이에 새 후기가 등록되면 한 칸씩 밀려 같은 후기가 또 올 수 있어서 이미 있는 후기는 뺌
+            setReviews((prev) => [
+                ...prev,
+                ...data.reviews.filter((review) => !prev.some((p) => p.reviewId === review.reviewId)),
+            ]);
             setTotalCount(data.totalCount);
             setHasNext(data.hasNext);
             setPage(nextPage);
@@ -101,7 +126,7 @@ function ClassReviewList({ classId, avgRating }) {
     }
 
     if (loadState === 'loading') {
-        return <p className="py-16 text-center text-gray-400">불러오는 중...</p>;
+        return <ReviewSkeleton />;
     }
 
     if (loadState === 'error') {
@@ -127,8 +152,10 @@ function ClassReviewList({ classId, avgRating }) {
                     <select
                         value={sort}
                         onChange={handleSortChange}
+                        // 더보기 중에 정렬을 바꾸면 늦게 온 이전 정렬 후기가 새 목록 뒤에 붙어서 막음
+                        disabled={isLoadingMore}
                         aria-label="후기 정렬"
-                        className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white pl-4 pr-10 text-sm text-gray-800 transition hover:border-brand focus:outline-none focus-visible:border-brand"
+                        className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white pl-4 pr-10 text-sm text-gray-800 transition hover:border-brand focus:outline-none focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         <option value="latest">최신순</option>
                         <option value="rating">별점순</option>
