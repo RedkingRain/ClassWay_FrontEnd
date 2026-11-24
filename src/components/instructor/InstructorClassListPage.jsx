@@ -19,6 +19,8 @@ function InstructorClassListPage() {
     const currentPage = isNaN(pageParam) || pageParam < 0 ? 0 : pageParam;
 
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
     const [classData, setClassData] = useState({
         totalCount: 0,
         totalPages: 0,
@@ -50,10 +52,12 @@ function InstructorClassListPage() {
                     throw new Error(result.message || '클래스 목록을 불러오지 못했습니다.');
                 }
                 setClassData(result.data || { totalCount: 0, totalPages: 0, currentPage: 0, classes: [] });
+                setFetchError(false);
                 setIsLoading(false);
             })
             .catch((error) => {
                 if (ignore) return;
+                setFetchError(true);
                 setIsLoading(false);
                 setAlertState({
                     isOpen: true,
@@ -65,7 +69,7 @@ function InstructorClassListPage() {
         return () => {
             ignore = true;
         };
-    }, [currentPage, isApproved]);
+    }, [currentPage, isApproved, reloadKey]);
 
     // 승인되지 않은 강사 전용 화면 처리
     // TODO: 추후 TutorPendingView 컴포넌트 개발 시 아래 반환부를 <TutorPendingView status={tutorStatus} /> 로 교체
@@ -133,11 +137,13 @@ function InstructorClassListPage() {
     }
 
     function handlePageChange(newPage) {
+        setIsLoading(true);
+        setFetchError(false);
         setSearchParams({ page: String(newPage) });
     }
 
     const { totalCount, totalPages, classes } = classData;
-    const isEmpty = !isLoading && classes.length === 0;
+    const isEmpty = !isLoading && !fetchError && classes.length === 0;
 
     const isTargetOfflineWithReservations =
         pendingTarget &&
@@ -180,7 +186,7 @@ function InstructorClassListPage() {
             </p>
 
             {/* 상단 카운트 및 등록 버튼 */}
-            {!isEmpty && (
+            {!isEmpty && !fetchError && (
                 <div className="mt-8 flex items-center justify-between">
                     <p className="text-sm font-bold text-gray-900">
                         전체 <span className="text-point">{totalCount}</span>개
@@ -195,10 +201,26 @@ function InstructorClassListPage() {
                 </div>
             )}
 
-            {/* 카드 목록 / 스켈레톤 / 빈 목록 */}
+            {/* 카드 목록 / 스켈레톤 / 에러 재시도 / 빈 목록 */}
             <div className="mt-4">
                 {isLoading ? (
                     <ClassListSkeleton />
+                ) : fetchError ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-20 text-center shadow-sm">
+                        <p className="text-base font-semibold text-gray-800">클래스 목록을 불러오지 못했습니다</p>
+                        <p className="mt-1 text-xs text-gray-500">네트워크 상태를 확인하고 다시 시도해 주세요.</p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsLoading(true);
+                                setFetchError(false);
+                                setReloadKey((k) => k + 1);
+                            }}
+                            className="mt-4 rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90 transition cursor-pointer"
+                        >
+                            다시 시도
+                        </button>
+                    </div>
                 ) : isEmpty ? (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 py-24 text-center">
                         <p className="text-base font-medium text-gray-700">아직 등록한 클래스가 없습니다</p>
@@ -224,7 +246,7 @@ function InstructorClassListPage() {
             </div>
 
             {/* 페이지네이션 */}
-            {!isLoading && totalPages > 1 && (
+            {!isLoading && !fetchError && totalPages > 1 && (
                 <div className="mt-10 flex items-center justify-center gap-1.5">
                     <button
                         type="button"
