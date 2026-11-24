@@ -14,9 +14,6 @@ export default function ClassLocationMap({ address }) {
             return;
         }
 
-        if (!kakao || !address) {
-            return;
-        }
         // 검색 중에 탭을 옮기거나 다른 클래스로 가면 지도 상자가 사라지므로, 늦게 온 응답은 버림
         let ignore = false;
 
@@ -39,7 +36,7 @@ export default function ClassLocationMap({ address }) {
         });
         return () => {
             ignore = true;
-        }
+        };
     }, [address]);
 
     return (
