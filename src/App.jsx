@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import ClassDetailPage from "./components/classDetail/ClassDetailPage.jsx";
+import SupportLayout from './components/main/SupportLayout.jsx';
+import TermsPage from './components/main/TermsPage.jsx';
+import InquiryPage from './components/main/InquiryPage.jsx';
 
 // 공통 틀
 import Layout from './components/main/Layout.jsx';
@@ -35,6 +38,11 @@ function App() {
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/fail" element={<PaymentFail />} />
                 <Route path="/order/complete" element={<OrderComplete />} />
+                {/* 고객센터 화면은 왼쪽 메뉴 틀(SupportLayout)을 한 번 더 씌움 */}
+                <Route element={<SupportLayout />}>
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/support/inquiry" element={<InquiryPage />} />
+                </Route>
                 <Route path="/admin/tutors" element={<AdminTutorApprovalPage />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/auth/login" element={<LoginPage />} /> */}
