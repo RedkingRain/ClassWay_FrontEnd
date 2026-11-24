@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { authFetch } from '../../utils/auth.js';
 import AdminSidebar from './AdminSidebar.jsx';
@@ -28,7 +27,7 @@ async function requestAdminApi(path, options) {
     return result.data;
 }
 
-// 상세 자리에 띄우는 안내 (불러오는 중 · 실패)
+// 상세 자리에 띄우는 안내 (불러오는 중 · 실패 · 0건)
 function DetailMessage({ text }) {
     return (
         <div className="rounded-2xl border border-gray-200 px-8 py-24 text-center text-sm text-gray-400">
@@ -37,9 +36,10 @@ function DetailMessage({ text }) {
     );
 }
 
-// 화면 두 가지를 주소로 구분 (뒤로 가기 · 새로고침해도 같은 화면 유지)
-//  - 목록 화면: /admin/tutors?status=PENDING
-//  - 상세 화면: /admin/tutors?status=PENDING&tutorId=3  (목록에서 신청을 클릭하면 들어감)
+// 왼쪽 신청 목록 + 오른쪽 상세를 한 화면에 나란히 보여줌
+// 선택한 탭 · 신청은 주소에 저장 (새로고침해도 같은 신청 유지)
+//  - /admin/tutors?status=PENDING            → 목록의 첫 번째 신청을 자동 선택
+//  - /admin/tutors?status=PENDING&tutorId=3  → 3번 신청 선택
 function AdminTutorApprovalPage() {
     const navigate = useNavigate();
     const { user, isLoading: isAuthLoading } = useAuth();
@@ -56,25 +56,14 @@ function AdminTutorApprovalPage() {
         navigate('/', { replace: true });
     }, [isAuthLoading, isAdmin, navigate]);
 
-    // ── 2. 주소에서 지금 탭 · 상세 번호 읽기 ──────────
+    // ── 2. 주소에서 지금 탭 · 선택한 신청 번호 읽기 ──
     const [searchParams, setSearchParams] = useSearchParams();
     // 탭: 주소에 없거나 잘못된 값이면 승인 대기
     const statusParam = searchParams.get('status');
     const status = STATUS_TABS.some((tab) => tab.status === statusParam) ? statusParam : 'PENDING';
-    // 상세 번호: 숫자일 때만 상세 화면, 없으면 목록 화면
+    // 선택한 신청 번호: 숫자일 때만 사용
     const tutorIdParam = searchParams.get('tutorId');
-    const selectedId = /^\d+$/.test(tutorIdParam ?? '') ? Number(tutorIdParam) : null;
-    const isListView = selectedId === null;
-
-    // 목록에서 신청 클릭 → 상세 화면으로 (뒤로 가기 하면 목록으로 돌아옴)
-    function openDetail(tutorId) {
-        setSearchParams({ status, tutorId: String(tutorId) });
-    }
-
-    // 상세 → 목록 화면으로 (replace: 처리 후 뒤로 가기로 처리 끝난 상세가 다시 열리지 않게)
-    function backToList({ replace = false } = {}) {
-        setSearchParams({ status }, { replace });
-    }
+    const pickedId = /^\d+$/.test(tutorIdParam ?? '') ? Number(tutorIdParam) : null;
 
     // 1씩 늘리면 건수 · 목록 · 상세를 전부 다시 조회 (승인 · 반려 후, 오류 후)
     const [reloadKey, setReloadKey] = useState(0);
@@ -83,7 +72,7 @@ function AdminTutorApprovalPage() {
     // ── 3. 탭 건수 (GET /admin/tutors/counts) ───────
     const [counts, setCounts] = useState(null); // { pending, approved, rejected }
     useEffect(() => {
-        if (!isAdmin || !isListView) return; // 건수는 목록 화면에서만 보임
+        if (!isAdmin) return;
         let ignore = false; // 늦게 온 예전 응답 무시
 
         requestAdminApi('/admin/tutors/counts')
@@ -97,7 +86,7 @@ function AdminTutorApprovalPage() {
         return () => {
             ignore = true;
         };
-    }, [isAdmin, isListView, reloadKey]);
+    }, [isAdmin, reloadKey]);
 
     // ── 4. 신청 목록 (GET /admin/tutors?status=) ────
     // 지금 보여줘야 할 목록의 「이름표」 = 탭 + 새로고침 번호
@@ -108,7 +97,7 @@ function AdminTutorApprovalPage() {
     const items = listState === 'done' ? loadedList.items : [];
 
     useEffect(() => {
-        if (!isAdmin || !isListView) return; // 목록 화면으로 올 때마다 최신 목록 조회
+        if (!isAdmin) return;
         let ignore = false;
 
         requestAdminApi(`/admin/tutors?status=${status}`)
@@ -122,7 +111,15 @@ function AdminTutorApprovalPage() {
         return () => {
             ignore = true;
         };
-    }, [isAdmin, isListView, status, listKey]);
+    }, [isAdmin, status, listKey]);
+
+    // 상세로 보여줄 신청: 주소에 고른 번호가 있으면 그것, 없으면 목록의 첫 번째 신청
+    const selectedId = pickedId ?? (items.length > 0 ? items[0].tutorId : null);
+
+    // 목록에서 신청 클릭 → 오른쪽 상세만 바뀜 (replace: 클릭할 때마다 뒤로 가기 기록이 쌓이지 않게)
+    function selectTutor(tutorId) {
+        setSearchParams({ status, tutorId: String(tutorId) }, { replace: true });
+    }
 
     // ── 5. 신청 상세 (GET /admin/tutors/{tutorId}) ──
     const detailKey = `${selectedId}:${reloadKey}`;
@@ -130,7 +127,7 @@ function AdminTutorApprovalPage() {
     const detailState = loadedDetail.key === detailKey ? loadedDetail.state : 'loading';
 
     useEffect(() => {
-        if (!isAdmin || selectedId === null) return; // 상세 화면일 때만 조회
+        if (!isAdmin || selectedId === null) return; // 선택한 신청이 있을 때만 조회
         let ignore = false;
 
         requestAdminApi(`/admin/tutors/${selectedId}`)
@@ -139,10 +136,11 @@ function AdminTutorApprovalPage() {
             })
             .catch((error) => {
                 if (ignore) return;
-                // 404 신청서 없음: 안내 후 목록 화면으로 (목록 · 건수 새로 조회)
+                // 404 신청서 없음: 안내 후 선택을 풀고 목록 · 건수 새로 조회 → 첫 번째 신청이 다시 선택됨
                 if (error.status === 404) {
                     alert(error.message);
                     setSearchParams({ status }, { replace: true });
+                    setReloadKey((key) => key + 1);
                     return;
                 }
                 // 403 등: 상세 자리에 message 표시
@@ -157,6 +155,12 @@ function AdminTutorApprovalPage() {
     // ── 6. 승인 · 반려 (PATCH) ──────────────────────
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 처리 후 선택을 풀고 전부 다시 조회 → 처리한 신청이 목록에서 빠지고 다음 신청이 선택됨
+    function resetSelection() {
+        setSearchParams({ status }, { replace: true });
+        reload();
+    }
+
     // 상세 카드가 확인 팝업 뒤에 호출 → 성공하면 true (상세 카드가 입력칸을 비움)
     async function handleProcess(action, tutorId, rejectReason) {
         setIsSubmitting(true);
@@ -169,14 +173,12 @@ function AdminTutorApprovalPage() {
                     body: JSON.stringify({ rejectReason }),
                 });
             }
-            // 성공: 목록 화면으로 돌아가서 건수 · 목록 다시 조회 → 처리한 신청이 목록에서 빠짐
-            reload();
-            backToList({ replace: true });
+            resetSelection();
             return true;
         } catch (error) {
             alert(error.message);
             if (error.status === 404) {
-                backToList({ replace: true }); // 신청서 없음 → 목록으로
+                resetSelection(); // 신청서 없음 → 선택 풀고 다시 조회
             } else if (error.status === 400) {
                 reload(); // 이미 처리됨 · 사유 오류 → 상세를 최신 상태로 다시 조회
             }
@@ -204,24 +206,27 @@ function AdminTutorApprovalPage() {
         );
     }
 
-    // 상세 화면에 보여줄 내용
-    let detailContent = null;
-    if (!isListView) {
-        if (detailState === 'loading') {
-            detailContent = <DetailMessage text="불러오는 중..." />;
-        } else if (detailState === 'error') {
-            detailContent = <DetailMessage text={loadedDetail.message} />;
-        } else {
-            detailContent = (
-                // key: 다른 신청으로 바뀌면 반려 사유 입력칸 · 팝업이 새로 시작되게
-                <TutorApplicationDetail
-                    key={selectedId}
-                    detail={loadedDetail.data}
-                    isSubmitting={isSubmitting}
-                    onProcess={handleProcess}
-                />
-            );
-        }
+    // 오른쪽 상세 자리에 보여줄 내용
+    let detailContent;
+    if (selectedId === null) {
+        // 선택된 신청이 없음: 목록을 기다리는 중이거나, 목록이 비었거나 실패
+        detailContent = (
+            <DetailMessage text={listState === 'loading' ? '불러오는 중...' : '선택된 신청이 없습니다.'} />
+        );
+    } else if (detailState === 'loading') {
+        detailContent = <DetailMessage text="불러오는 중..." />;
+    } else if (detailState === 'error') {
+        detailContent = <DetailMessage text={loadedDetail.message} />;
+    } else {
+        detailContent = (
+            // key: 다른 신청으로 바뀌면 반려 사유 입력칸 · 팝업이 새로 시작되게
+            <TutorApplicationDetail
+                key={selectedId}
+                detail={loadedDetail.data}
+                isSubmitting={isSubmitting}
+                onProcess={handleProcess}
+            />
+        );
     }
 
     return (
@@ -236,56 +241,43 @@ function AdminTutorApprovalPage() {
                     강사 신청자의 정보와 제출 자료를 확인하고 승인 또는 반려합니다.
                 </p>
 
-                {isListView ? (
-                    // 2-1. 목록 화면: 상태 탭 + 신청 목록
-                    <>
-                        {/* 상태 탭 (선택된 탭은 진한 초록) */}
-                        <div role="tablist" aria-label="신청 상태" className="mt-6 flex gap-2">
-                            {STATUS_TABS.map((tab) => {
-                                const isActive = tab.status === status;
-                                return (
-                                    <button
-                                        key={tab.status}
-                                        type="button"
-                                        role="tab"
-                                        aria-selected={isActive}
-                                        onClick={() => handleTabClick(tab.status)}
-                                        className={`h-10 rounded-full border px-4 text-sm transition ${
-                                            isActive
-                                                ? 'border-brand bg-brand text-white'
-                                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        {tab.label} {counts ? counts[tab.countKey] : ''}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                {/* 2. 상태 탭 (선택된 탭은 진한 초록) */}
+                <div role="tablist" aria-label="신청 상태" className="mt-6 flex gap-2">
+                    {STATUS_TABS.map((tab) => {
+                        const isActive = tab.status === status;
+                        return (
+                            <button
+                                key={tab.status}
+                                type="button"
+                                role="tab"
+                                aria-selected={isActive}
+                                onClick={() => handleTabClick(tab.status)}
+                                className={`h-10 rounded-full border px-4 text-sm transition ${
+                                    isActive
+                                        ? 'border-brand bg-brand text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                {tab.label} {counts ? counts[tab.countKey] : ''}
+                            </button>
+                        );
+                    })}
+                </div>
 
-                        <div className="mt-6">
-                            <TutorApplicationList
-                                listState={listState}
-                                items={items}
-                                errorMessage={loadedList.message}
-                                onSelect={openDetail}
-                                onRetry={reload}
-                            />
-                        </div>
-                    </>
-                ) : (
-                    // 2-2. 상세 화면: 목록으로 돌아가기 + 상세 카드
-                    <>
-                        <button
-                            type="button"
-                            onClick={() => backToList()}
-                            className="mt-6 flex items-center gap-1 text-sm text-gray-600 transition hover:text-gray-900"
-                        >
-                            <ChevronLeft size={16} />
-                            목록으로
-                        </button>
-                        <div className="mt-4">{detailContent}</div>
-                    </>
-                )}
+                {/* 3. 왼쪽 신청 목록 + 오른쪽 상세 (좁은 화면에서는 위아래로) */}
+                <div className="mt-6 flex flex-col gap-7 md:flex-row md:items-start">
+                    <div className="md:w-[300px] md:shrink-0">
+                        <TutorApplicationList
+                            listState={listState}
+                            items={items}
+                            selectedId={selectedId}
+                            errorMessage={loadedList.message}
+                            onSelect={selectTutor}
+                            onRetry={reload}
+                        />
+                    </div>
+                    <div className="min-w-0 flex-1">{detailContent}</div>
+                </div>
             </section>
         </main>
     );

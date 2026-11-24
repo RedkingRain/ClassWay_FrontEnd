@@ -1,11 +1,12 @@
 import TutorStatusBadge from './TutorStatusBadge.jsx';
 import { formatDate } from '../../utils/format.js';
 
-// 가운데 신청 목록 (요청은 페이지가 하고, 여기서는 받은 목록을 그리기만 함)
+// 왼쪽 신청 목록 (요청은 페이지가 하고, 여기서는 받은 목록을 그리기만 함)
 // listState: loading / done / error
 // items: [{ tutorId, name, email, appliedAt, approvalStatus }]
-// onSelect(tutorId): 신청을 클릭하면 상세 화면으로 이동
-function TutorApplicationList({ listState, items, errorMessage, onSelect, onRetry }) {
+// selectedId: 오른쪽 상세에 보이는 신청 번호 (해당 행을 연한 초록 배경으로 표시)
+// onSelect(tutorId): 신청을 클릭하면 오른쪽 상세가 바뀜
+function TutorApplicationList({ listState, items, selectedId, errorMessage, onSelect, onRetry }) {
     // 불러오는 중
     if (listState === 'loading') {
         return <p className="py-16 text-center text-sm text-gray-400">불러오는 중...</p>;
@@ -36,12 +37,16 @@ function TutorApplicationList({ listState, items, errorMessage, onSelect, onRetr
         // 행 사이 구분선 (서버가 준 순서 = 신청일 오래된 순 그대로)
         <ul className="divide-y divide-gray-100 border-b border-gray-100">
             {items.map((item) => {
+                const isSelected = item.tutorId === selectedId;
                 return (
                     <li key={item.tutorId}>
                         <button
                             type="button"
                             onClick={() => onSelect(item.tutorId)}
-                            className="w-full rounded-lg px-4 py-4 text-left transition hover:bg-brand-soft"
+                            aria-current={isSelected ? 'true' : undefined}
+                            className={`w-full rounded-lg px-4 py-4 text-left transition ${
+                                isSelected ? 'bg-brand-soft' : 'hover:bg-gray-50'
+                            }`}
                         >
                             {/* 이름 + 상태 라벨 */}
                             <div className="flex items-start justify-between gap-2">
