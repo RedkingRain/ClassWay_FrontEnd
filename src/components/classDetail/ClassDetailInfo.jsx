@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Bookmark, Share2, ChevronRight, ChevronDown, Star,
     MapPin, Clock, PlayCircle, ListVideo, CalendarDays, Users,
 } from 'lucide-react';
+import ConfirmModal from '../common/ConfirmModal.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import { authFetch } from '../../utils/auth.js';
 import { formatDuration } from '../../utils/format.js';
 
 // 상세 정보 (CLASS-001), detail은 상세 API 응답 data
 function ClassDetailInfo({ detail }) {
     const {
-        title, summary, classType, category, avgRating, reviewCount, wishCount,
+        classId, title, summary, classType, category, avgRating, reviewCount,
         studentCount, totalDurationMinutes, lectureCount, region, tutor,
         maxCapacity,
     } = detail;
@@ -25,16 +28,60 @@ function ClassDetailInfo({ detail }) {
         return () => clearTimeout(toastTimerRef.current);
     }, []);
 
-    async function handleShare() {
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-            setToast({ type: 'success', message: '주소가 클립보드에 복사되었습니다.' });
-        } catch {
-            setToast({ type: 'error', message: '주소 복사에 실패했습니다. 다시 시도해 주세요.' });
-        }
+    const { user, isLoading } = useAuth();
+    const navigate = useNavigate();
+    // 누를 때마다 서버 응답으로 바꿔야 해서 처음 값만 상세 API에서 받아 둠
+    const [isWished, setIsWished] = useState(detail.isWished);
+    const [wishCount, setWishCount] = useState(detail.wishCount);
+    // 연달아 눌러 찜했다가 바로 풀리는 일을 막음
+    const [isWishSubmitting, setIsWishSubmitting] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+    function showToast(type, message) {
+        setToast({ type, message });
         // 연달아 눌러도 마지막 토스트가 2초 동안 보이게 이전 타이머를 취소하고 새로 검
         clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => setToast(null), 2000);
+    }
+
+    async function handleShare() {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            showToast('success', '주소가 클립보드에 복사되었습니다.');
+        } catch {
+            showToast('error', '주소 복사에 실패했습니다. 다시 시도해 주세요.');
+        }
+    }
+
+    async function handleWish() {
+        // 새로고침 직후 로그인 확인 중에는 팝업을 띄우지 않음
+        if (isLoading) return;
+        if (!user) {
+            setIsLoginModalOpen(true);
+            return;
+        }
+
+        setIsWishSubmitting(true);
+        try {
+            // 회원 번호는 서버가 토큰으로 판단해서 보내지 않음
+            const response = await authFetch(`/classes/${encodeURIComponent(classId)}/wish`, {
+                method: 'POST',
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || !result.success) {
+                showToast('error', result.message || '찜하기에 실패했습니다. 다시 시도해 주세요.');
+                return;
+            }
+            // 화면에서 +1, -1 하지 않고 서버가 바꾼 값을 그대로 씀
+            setIsWished(result.data.wished);
+            setWishCount(result.data.wishCount);
+        } catch {
+            // 서버가 꺼져 있는 등 서버에 닿지 못한 실패
+            showToast('error', '찜하기에 실패했습니다. 다시 시도해 주세요.');
+        } finally {
+            setIsWishSubmitting(false);
+        }
     }
 
     return (
@@ -51,15 +98,21 @@ function ClassDetailInfo({ detail }) {
                     </Link>
                 </nav>
                 <div className="flex items-center gap-1 text-gray-700">
-                    {/* 찜하기는 P1 */}
                     <button
                         type="button"
                         aria-label="찜하기"
-                        className="group p-2"
+                        aria-pressed={isWished}
+                        onClick={handleWish}
+                        disabled={isWishSubmitting}
+                        className="group p-2 disabled:cursor-wait disabled:opacity-50"
                     >
                         <Bookmark
                             size={20}
-                            className="transition group-hover:fill-brand group-hover:text-brand"
+                            className={
+                                isWished
+                                    ? 'fill-brand text-brand'
+                                    : 'transition group-hover:fill-brand group-hover:text-brand'
+                            }
                         />
                     </button>
                     <button
@@ -167,6 +220,14 @@ function ClassDetailInfo({ detail }) {
                     </div>
                 )}
             </div>
+            {isLoginModalOpen && (
+                <ConfirmModal
+                    message="로그인 후 이용 가능한 기능입니다."
+                    confirmLabel="로그인하기"
+                    onCancel={() => setIsLoginModalOpen(false)}
+                    onConfirm={() => navigate('/login')}
+                />
+            )}
             {toast && (
                 <div
                     role="status"
