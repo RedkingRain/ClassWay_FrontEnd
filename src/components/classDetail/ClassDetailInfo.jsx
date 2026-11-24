@@ -61,6 +61,7 @@ function ClassDetailInfo({ detail }) {
             return;
         }
 
+        const failMessage = '찜하기에 실패했습니다. 다시 시도해 주세요.';
         setIsWishSubmitting(true);
         try {
             // 회원 번호는 서버가 토큰으로 판단해서 보내지 않음
@@ -70,7 +71,7 @@ function ClassDetailInfo({ detail }) {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok || !result.success) {
-                showToast('error', result.message || '찜하기에 실패했습니다. 다시 시도해 주세요.');
+                showToast('error', result.message || failMessage);
                 return;
             }
             // 화면에서 +1, -1 하지 않고 서버가 바꾼 값을 그대로 씀
@@ -78,7 +79,7 @@ function ClassDetailInfo({ detail }) {
             setWishCount(result.data.wishCount);
         } catch {
             // 서버가 꺼져 있는 등 서버에 닿지 못한 실패
-            showToast('error', '찜하기에 실패했습니다. 다시 시도해 주세요.');
+            showToast('error', failMessage);
         } finally {
             setIsWishSubmitting(false);
         }
