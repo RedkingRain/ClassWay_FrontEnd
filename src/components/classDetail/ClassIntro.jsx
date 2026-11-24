@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify';
 import { MapPin } from 'lucide-react';
 import { formatDuration } from '../../utils/format.js';
+import ClassLocationMap from './ClassLocationMap.jsx';
 
 // 강의 소개 탭 (CLASS-001), detail은 상세 API 응답 data
 function ClassIntro({ detail }) {
@@ -62,10 +63,7 @@ function ClassIntro({ detail }) {
                         <MapPin size={16} className="shrink-0 text-gray-500" />
                         {address}
                     </p>
-                    {/* 지도 API(네이버, 카카오, 구글)를 고른 뒤 교체 */}
-                    <div className="mt-4 flex aspect-[16/7] items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
-                        지도 영역 (지도 API 선정 후)
-                    </div>
+                    <ClassLocationMap address={address} />
                 </div>
             )}
         </div>
