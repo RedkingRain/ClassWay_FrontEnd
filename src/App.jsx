@@ -17,6 +17,7 @@ import PaymentSuccess from './components/payment/PaymentSuccess.jsx';
 import PaymentFail from './components/payment/PaymentFail.jsx';
 import OrderComplete from './components/payment/OrderComplete.jsx';
 import ClassListPage from "./components/classList/ClassListPage.jsx";
+import AdminTutorApprovalPage from './components/admin/AdminTutorApprovalPage.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
 // 예) import LoginPage from './components/login/LoginPage.jsx';
 
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/support/inquiry" element={<InquiryPage />} />
                 </Route>
+                <Route path="/admin/tutors" element={<AdminTutorApprovalPage />} />
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/auth/login" element={<LoginPage />} /> */}
             </Route>
