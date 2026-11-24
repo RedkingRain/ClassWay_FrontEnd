@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ClassDetailPage from "./components/classDetail/ClassDetailPage.jsx";
 import SupportLayout from './components/main/SupportLayout.jsx';
 import TermsPage from './components/main/TermsPage.jsx';
@@ -18,6 +18,8 @@ import PaymentFail from './components/payment/PaymentFail.jsx';
 import OrderComplete from './components/payment/OrderComplete.jsx';
 import ClassListPage from "./components/classList/ClassListPage.jsx";
 import AdminTutorApprovalPage from './components/admin/AdminTutorApprovalPage.jsx';
+import InstructorLayout from './components/instructor/InstructorLayout.jsx';
+import InstructorClassListPage from './components/instructor/InstructorClassListPage.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
 // 예) import LoginPage from './components/login/LoginPage.jsx';
 
@@ -44,6 +46,10 @@ function App() {
                 <Route path="/support/inquiry" element={<InquiryPage />} />
                 </Route>
                 <Route path="/admin/tutors" element={<AdminTutorApprovalPage />} />
+                <Route path="/instructor" element={<InstructorLayout />}>
+                    <Route index element={<Navigate to="classes" replace />} />
+                    <Route path="classes" element={<InstructorClassListPage />} />
+                </Route>
                 {/* 다른 팀원은 아래에 자기 페이지 한 줄씩 추가 */}
                 {/* 예) <Route path="/auth/login" element={<LoginPage />} /> */}
             </Route>
