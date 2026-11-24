@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ClassCurriculum from './ClassCurriculum.jsx';
 import ClassIntro from './ClassIntro.jsx';
 import ClassReviewList from './ClassReviewList.jsx';
+import ClassQnaList from './ClassQnaList.jsx';
 
 // 상세 탭 (CLASS-001), detail은 상세 API 응답 data
 function ClassDetailTabs({ detail }) {
@@ -49,7 +50,7 @@ function ClassDetailTabs({ detail }) {
                         avgRating={detail.avgRating}
                     />
                 )}
-                {activeTab === 'qna' && <p className="text-gray-400">Q&A 준비 중</p>}
+                {activeTab === 'qna' && <ClassQnaList key={detail.classId} classId={detail.classId} />}
             </div>
         </section>
     );
