@@ -3,7 +3,8 @@ import { Check, ChevronDown } from 'lucide-react';
 
 // 공용 드롭다운 (기본 select는 펼친 목록을 꾸밀 수 없어서 직접 그림)
 // options: [{ value, label }], value: 고른 값 (안 골랐으면 ''), onChange(고른 value)
-function Dropdown({ options, value, onChange, placeholder = '선택하세요', id, label, small = false, className = '' }) {
+function Dropdown({ options, value, onChange, placeholder = '선택하세요', id, label, small = false,
+                      disabled = false, className = '' }) {
     const [isOpen, setIsOpen] = useState(false);
     const selected = options.find((option) => option.value === value);
 
@@ -18,9 +19,10 @@ function Dropdown({ options, value, onChange, placeholder = '선택하세요', i
                 type="button"
                 id={id}
                 onClick={() => setIsOpen(!isOpen)}
+                disabled={disabled}
                 aria-expanded={isOpen}
                 aria-label={label && `${label}, 지금 ${selected ? selected.label : '선택 안 함'}`}
-                className={`flex w-full items-center justify-between gap-6 rounded-lg border bg-white pl-4 pr-3 text-left text-sm ${
+                className={`flex w-full items-center justify-between gap-6 rounded-lg border bg-white pl-4 pr-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-60 ${
                     small ? 'py-1.5' : 'py-2.5'
                 } ${isOpen ? 'border-brand' : 'border-gray-300 hover:border-gray-400'} ${
                     selected ? 'text-gray-700' : 'text-gray-400'
