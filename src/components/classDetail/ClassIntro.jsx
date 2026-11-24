@@ -63,7 +63,7 @@ function ClassIntro({ detail }) {
                         <MapPin size={16} className="shrink-0 text-gray-500" />
                         {address}
                     </p>
-                    <ClassLocationMap address={address} />
+                    <ClassLocationMap key={address} address={address} />
                 </div>
             )}
         </div>
