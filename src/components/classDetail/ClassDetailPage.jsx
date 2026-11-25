@@ -99,7 +99,7 @@ function ClassDetailPage() {
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px]">
                 <div>
-                    <ClassDetailInfo detail={detail} />
+                    <ClassDetailInfo key={detail.classId} detail={detail} />
 
                     <ClassDetailTabs detail={detail} />
                 </div>
