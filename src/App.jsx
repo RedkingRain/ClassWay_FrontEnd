@@ -21,6 +21,7 @@ import AdminTutorApprovalPage from './components/admin/AdminTutorApprovalPage.js
 import InstructorLayout from './components/instructor/InstructorLayout.jsx';
 import InstructorClassListPage from './components/instructor/InstructorClassListPage.jsx';
 import ReadyNotice from './components/common/ReadyNotice.jsx';
+import StudyDashboardPage from './components/study/StudyDashboardPage.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
 // 예) import LoginPage from './components/login/LoginPage.jsx';
 
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/classes" element={<ClassListPage />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
+                <Route path="/study/:classId" element={<StudyDashboardPage />} />
                 <Route path="/carts" element={<CartPaymentPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/fail" element={<PaymentFail />} />
