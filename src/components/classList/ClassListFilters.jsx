@@ -1,10 +1,16 @@
-import { ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import ClassTypeTabs from '../common/ClassTypeTabs.jsx';
+import Dropdown from '../common/Dropdown.jsx';
 
 // classes.region 앞부분과 같은 글자여야 검색됨
 const REGIONS = [
     '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기',
     '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
+];
+
+const REGION_OPTIONS = [
+    { value: '', label: '지역 전체' },
+    ...REGIONS.map((item) => ({ value: item, label: `${item} 전체` })),
 ];
 
 const SORTS = [
@@ -13,28 +19,16 @@ const SORTS = [
     { value: 'rating', label: '별점순' },
 ];
 
-// 드롭다운을 직접 만들지 않고 select 태그에 모양만 입혀서, 키보드로 고르기와 화면 읽어주기가 저절로 됨
-function FilterSelect({ label, value, onChange, children }) {
-    return (
-        <label className="relative flex h-9 items-center gap-2 rounded-lg border border-gray-300 pl-4 pr-9 text-sm">
-            {label && <span className="shrink-0 text-gray-400">{label}</span>}
-            <select
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                className="w-full cursor-pointer appearance-none bg-transparent font-medium text-gray-900 focus:outline-none"
-            >
-                {children}
-            </select>
-            {/* 화살표를 눌러도 select가 열리게 클릭을 통과시킴 */}
-            <ChevronDown size={16} className="pointer-events-none absolute right-3 text-gray-500" />
-        </label>
-    );
-}
-
 // 클래스 목록 필터 (MAIN-002), onChange에 '' 값을 넘기면 그 필터를 해제함
 function ClassListFilters({ filters, mode, categories, onChange, onReset }) {
     const { category, classType, region, sort } = filters;
     const isKeywordMode = mode === 'keyword';
+
+    // 주소에서 온 category는 글자라서 categoryId도 글자로 바꿔야 같은 값으로 찾아짐
+    const categoryOptions = [
+        { value: '', label: '카테고리 전체' },
+        ...categories.map((item) => ({ value: String(item.categoryId), label: item.name })),
+    ];
 
     // 칩 순서는 와이어프레임 기준 (카테고리, 수업 형태, 지역)
     const chips = [];
@@ -64,36 +58,33 @@ function ClassListFilters({ filters, mode, categories, onChange, onReset }) {
 
                 {/* 키워드 화면에만 둠, 다른 화면은 아이콘 줄이 대신함 */}
                 {isKeywordMode && (
-                    <FilterSelect label="카테고리" value={category} onChange={(value) => onChange({ category: value })}>
-                        <option value="">전체</option>
-                        {categories.map((item) => (
-                            <option key={item.categoryId} value={item.categoryId}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </FilterSelect>
+                    <Dropdown
+                        small
+                        label="카테고리"
+                        options={categoryOptions}
+                        value={category}
+                        onChange={(value) => onChange({ category: value })}
+                    />
                 )}
 
                 {classType === 'OFFLINE' && (
-                    <FilterSelect label="지역" value={region} onChange={(value) => onChange({ region: value })}>
-                        <option value="">전체</option>
-                        {REGIONS.map((item) => (
-                            <option key={item} value={item}>
-                                {item} 전체
-                            </option>
-                        ))}
-                    </FilterSelect>
+                    <Dropdown
+                        small
+                        label="지역"
+                        options={REGION_OPTIONS}
+                        value={region}
+                        onChange={(value) => onChange({ region: value })}
+                    />
                 )}
 
-                <div className="ml-auto w-32">
-                    <FilterSelect value={sort} onChange={(value) => onChange({ sort: value })}>
-                        {SORTS.map((item) => (
-                            <option key={item.value} value={item.value}>
-                                {item.label}
-                            </option>
-                        ))}
-                    </FilterSelect>
-                </div>
+                <Dropdown
+                    small
+                    label="정렬"
+                    options={SORTS}
+                    value={sort}
+                    onChange={(value) => onChange({ sort: value })}
+                    className="ml-auto w-32"
+                />
             </div>
 
             {chips.length > 0 && (

@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Star, ChevronDown } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { formatDate } from '../../utils/format.js';
 import { authFetch } from '../../utils/auth.js';
+import Dropdown from '../common/Dropdown.jsx';
+
+const SORTS = [
+    { value: 'latest', label: '최신순' },
+    { value: 'rating', label: '별점순' },
+];
 
 // 서버 기본값과 같음
 const PAGE_SIZE = 5;
@@ -97,11 +103,9 @@ function ClassReviewList({ classId, avgRating }) {
         };
     }, [classId, sort, requestKey]);
 
-    function handleSortChange(event) {
-        setSort(event.target.value);
+    function handleSortChange(nextSort) {
+        setSort(nextSort);
         setLoadMoreError('');
-        // 고른 뒤에도 초록 테두리가 남지 않게 선택 상태를 풀어 줌
-        event.target.blur();
     }
 
     async function handleLoadMore() {
@@ -148,23 +152,15 @@ function ClassReviewList({ classId, avgRating }) {
                     </span>
                 </p>
 
-                <div className="group relative w-32">
-                    <select
-                        value={sort}
-                        onChange={handleSortChange}
-                        // 더보기 중에 정렬을 바꾸면 늦게 온 이전 정렬 후기가 새 목록 뒤에 붙어서 막음
-                        disabled={isLoadingMore}
-                        aria-label="후기 정렬"
-                        className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white pl-4 pr-10 text-sm text-gray-800 transition hover:border-brand focus:outline-none focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        <option value="latest">최신순</option>
-                        <option value="rating">별점순</option>
-                    </select>
-                    <ChevronDown
-                        size={16}
-                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition group-hover:text-brand"
-                    />
-                </div>
+                {/* 더보기 중에 정렬을 바꾸면 늦게 온 이전 정렬 후기가 새 목록 뒤에 붙어서 막음 */}
+                <Dropdown
+                    label="후기 정렬"
+                    options={SORTS}
+                    value={sort}
+                    onChange={handleSortChange}
+                    disabled={isLoadingMore}
+                    className="w-32"
+                />
             </div>
 
             <ul>
