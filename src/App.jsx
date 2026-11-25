@@ -39,6 +39,9 @@ function App() {
                 <Route path="/classes" element={<ClassListPage />} />
                 <Route path="/classes/:classId" element={<ClassDetailPage />} />
                 <Route path="/study/:classId" element={<StudyDashboardPage />} />
+                    <Route path="/study/:classId/:lectureId" element={<ReadyNotice title="강의 컨텐츠" />} />
+                    <Route path="/study/:classId/notice/:postId" element={<ReadyNotice title="공지 / 학습 자료" />} />
+                <Route path="/carts" element={<CartPaymentPage />} />
                 <Route path="/carts" element={<CartPaymentPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/fail" element={<PaymentFail />} />
