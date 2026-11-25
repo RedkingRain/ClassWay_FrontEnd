@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    Bookmark, Share2, ChevronRight, ChevronDown, Star,
+    Bookmark, Share2, ChevronRight, ChevronDown, Star, User,
     MapPin, Clock, PlayCircle, ListVideo, CalendarDays, Users,
 } from 'lucide-react';
 import ConfirmModal from '../common/ConfirmModal.jsx';
@@ -19,6 +19,8 @@ function ClassDetailInfo({ detail }) {
 
     const isOnline = classType === 'ONLINE';
     const [isTutorOpen, setIsTutorOpen] = useState(false);
+    // 주소는 있지만 파일이 없어 이미지를 못 불러온 경우 기본 이미지로 바꾸려고 기억함
+    const [isImageBroken, setIsImageBroken] = useState(false);
     // 토스트는 없으면 null, 있으면 { type, message }
     const [toast, setToast] = useState(null);
     // 다시 누르면 이전 타이머를 취소하려고 번호를 기억함
@@ -183,17 +185,24 @@ function ClassDetailInfo({ detail }) {
 
             <div className="mt-4 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-4 p-4">
-                    {tutor.profileImage ? (
-                        <img src={tutor.profileImage} alt="" className="h-12 w-12 rounded-full object-cover" />
+                    {tutor.profileImage && !isImageBroken ? (
+                        <img
+                            src={tutor.profileImage}
+                            alt=""
+                            onError={() => setIsImageBroken(true)}
+                            className="h-12 w-12 shrink-0 rounded-full object-cover"
+                        />
                     ) : (
-                        <div className="h-12 w-12 shrink-0 rounded-full bg-gray-200" />
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                            <User size={24} />
+                        </div>
                     )}
                     <div className="min-w-0 flex-1">
                         <p className="font-semibold text-gray-900">{tutor.nickname} 강사</p>
-                        <p className="truncate text-sm text-gray-500">
-                            {tutor.intro}
-                            {tutor.classCount > 0 && ` · 클래스 ${tutor.classCount}개 운영`}
-                        </p>
+                        {tutor.intro && <p className="truncate text-sm text-gray-500">{tutor.intro}</p>}
+                        {tutor.classCount > 0 && (
+                            <p className="mt-0.5 text-xs text-gray-400">클래스 {tutor.classCount}개 운영</p>
+                        )}
                     </div>
 
                     <button
