@@ -3,6 +3,7 @@ import {useEffect} from "react";
 /**
  * 공통 확인 팝업 — 화면 가운데 작은 창 + 버튼 2개 (피그마 CLASS-002 · CLASS-003 팝업 모양)
  *
+ * title         상단 굵은 제목 (선택 사항, 전달 시 제목 + 설명 분리 스타일 적용)
  * message       안내 문구 (\n 넣으면 줄바꿈)
  * cancelLabel   왼쪽 흰 버튼 글자 (기본 '닫기')
  * confirmLabel  오른쪽 초록 버튼 글자
@@ -16,7 +17,7 @@ import {useEffect} from "react";
  *  )}
  */
 
-function ConfirmModal({message, cancelLabel= '닫기', confirmLabel,
+function ConfirmModal({title, message, cancelLabel= '닫기', confirmLabel,
                       onCancel, onConfirm}) {
     // ESC 키로 닫기 (팝업이 떠 있는 동안 감시)
     useEffect(() => {
@@ -37,16 +38,35 @@ function ConfirmModal({message, cancelLabel= '닫기', confirmLabel,
         <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="confirm-modal-message"
+            aria-labelledby={title ? "confirm-modal-title" : "confirm-modal-message"}
             onClick={(event) => event.stopPropagation()}
             className={"w-full max-w-sm rounded-2xl bg-white p-7 shadow-xl"}
         >
-            <p
-                id="confirm-modal-message"
-                className="whitespace-pre-line text-lg font-semibold leading-relaxed text-gray-900"
-            >
-                {message}
-            </p>
+            {title ? (
+                <div>
+                    <h3
+                        id="confirm-modal-title"
+                        className="text-lg font-bold text-gray-900"
+                    >
+                        {title}
+                    </h3>
+                    {message && (
+                        <p
+                            id="confirm-modal-message"
+                            className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-gray-600"
+                        >
+                            {message}
+                        </p>
+                    )}
+                </div>
+            ) : (
+                <p
+                    id="confirm-modal-message"
+                    className="whitespace-pre-line text-lg font-semibold leading-relaxed text-gray-900"
+                >
+                    {message}
+                </p>
+            )}
 
             <div className="mt-6 grid grid-cols-2 gap-2">
                 <button
