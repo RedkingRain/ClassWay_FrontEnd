@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { API_BASE_URL } from "../../utils/auth.js";
+import { isSafeInternalLink } from "../../utils/link.js";
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -13,6 +14,11 @@ function Login() {
 
     const navigate = useNavigate();
     const { isAuthenticated, loginSuccess } = useAuth();
+
+    // 로그인이 필요한 화면에서 보낸 돌아갈 주소, 남이 만든 링크로 다른 사이트에 가지 않게 우리 사이트 주소만 허용
+    const [searchParams] = useSearchParams();
+    const returnUrl = searchParams.get("returnUrl");
+    const nextPath = isSafeInternalLink(returnUrl) ? returnUrl : "/";
 
     // 팝업이 열려있을 때 ESC 키로 닫기
     useEffect(() => {
@@ -28,9 +34,9 @@ function Login() {
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [isNotFoundModalOpen]);
 
-    // 로그인 성공 및 접속자 회원 정보 조회 성공 시, 메인페이지 이동
+    // 로그인 성공 및 접속자 회원 정보 조회 성공 시, 돌아갈 주소(없으면 메인)로 이동
     if (isAuthenticated) {
-        return <Navigate to="/" replace />;
+        return <Navigate to={nextPath} replace/>;
     }
 
     // 1차 입력값 형식 검증
@@ -90,8 +96,8 @@ function Login() {
             // 토큰 저장 및 /auth/me 사용자 정보 조회
             await loginSuccess(result.data);
 
-            // 정상 처리 후 페이지 이동 (메인 페이지)
-            navigate("/");
+            // 뒤로 가기를 눌렀을 때 로그인 화면으로 돌아오지 않게 replace
+            navigate(nextPath, { replace: true });
         } catch (error) {
             setMessage(error.message || "로그인 중 오류가 발생했습니다.");
         } finally {
