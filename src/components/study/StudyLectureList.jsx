@@ -43,7 +43,7 @@ function StudyLectureList({ classId, chapters, isTutor }) {
                         </button>
                     )}
 
-                    {/* 등록, 선택 삭제는 STUDY-003에서 연결 */}
+                    {/* 수정, 선택 삭제는 STUDY-003에서 연결 */}
                     {isTutor && (
                         <>
                             <button
@@ -56,7 +56,7 @@ function StudyLectureList({ classId, chapters, isTutor }) {
                                 type="button"
                                 className="rounded-lg bg-brand px-4 py-2 text-sm text-white hover:opacity-90"
                             >
-                                + 클래스 컨텐츠 등록
+                                강의 컨텐츠 수정
                             </button>
                         </>
                     )}
@@ -108,6 +108,11 @@ function StudyLectureList({ classId, chapters, isTutor }) {
                                                         {String(lectureIndex + 1).padStart(2, '0')}
                                                     </span>
                                                     <span className="flex-1 text-gray-800">{lecture.title}</span>
+                                                    {isTutor && !lecture.hasContent && (
+                                                        <span className="mr-4 shrink-0 text-xs text-orange-500">
+                                                            컨텐츠 미등록
+                                                        </span>
+                                                    )}
                                                     <span className="w-14 shrink-0 text-right text-gray-500">
                                                         {lecture.durationMinutes}분
                                                     </span>
