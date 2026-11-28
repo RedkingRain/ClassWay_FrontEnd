@@ -7,10 +7,13 @@ export default function ClassLocationMap({ address }) {
     // 좌표를 찾아야 길찾기 주소를 만들 수 있어서 상태로 기억
     const [routeUrl, setRouteUrl] = useState('');
 
+    // 주소에 '|' 구분자가 있으면 앞부분(메인 주소)만 추출하여 지도에 표시
+    const mainAddress = address ? String(address).split('|')[0].trim() : '';
+
     // 카카오 지도는 React 태그가 아니라 div 안에 직접 그려 넣는 방식이라 화면이 그려진 뒤 실행
     useEffect(() => {
         const kakao = window.kakao;
-        if (!kakao || !address) {
+        if (!kakao || !mainAddress) {
             return;
         }
 
@@ -19,7 +22,7 @@ export default function ClassLocationMap({ address }) {
 
         kakao.maps.load(() => {
             const geocoder = new kakao.maps.services.Geocoder();
-            geocoder.addressSearch(address, (result, status) => {
+            geocoder.addressSearch(mainAddress, (result, status) => {
                 if (ignore || status !== kakao.maps.services.Status.OK) {
                     return;
                 }
@@ -37,7 +40,7 @@ export default function ClassLocationMap({ address }) {
         return () => {
             ignore = true;
         };
-    }, [address]);
+    }, [mainAddress]);
 
     return (
         <div>
