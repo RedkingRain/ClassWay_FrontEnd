@@ -41,11 +41,59 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
     }
 
     const [chapters, setChapters] = useState(() => [createEmptyChapter()]);
-    const [loadedClassId, setLoadedClassId] = useState(null);
+    const [loadedKey, setLoadedKey] = useState(null);
+    const [loadError, setLoadError] = useState('');
+    const [reloadKey, setReloadKey] = useState(0);
     const [emptyChapterErrors, setEmptyChapterErrors] = useState({});
     const [dragItem, setDragItem] = useState(null); // { type: 'CHAPTER' | 'LECTURE', chIndex, lecIndex }
 
-    const isLoading = Boolean(classId) && loadedClassId !== classId;
+    const currentRequestKey = classId ? `${classId}:${reloadKey}` : null;
+    const isLoading = Boolean(classId) && loadedKey !== currentRequestKey;
+
+    // 서버 응답(chapters, lectures)을 내부 트리 상태 구조로 변환
+    function mapCurriculumResponse(data) {
+        const rawChapters = Array.isArray(data?.chapters)
+            ? [...data.chapters].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            : [];
+        const rawLectures = Array.isArray(data?.lectures)
+            ? [...data.lectures].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            : [];
+
+        if (rawChapters.length === 0) {
+            return [createEmptyChapter()];
+        }
+
+        return rawChapters.map((ch) => {
+            const matchedLectures = rawLectures
+                .filter((lec) => lec.chapterId === ch.chapterId)
+                .map((lec) => {
+                    // 백엔드 durationSec (초 단위) -> 분 / 초 변환 (구버전 durationMinutes 폴백 호환)
+                    const totalSec =
+                        typeof lec.durationSec === 'number'
+                            ? lec.durationSec
+                            : typeof lec.durationMinutes === 'number'
+                              ? lec.durationMinutes * 60
+                              : 0;
+                    const mins = totalSec > 0 ? String(Math.floor(totalSec / 60)) : '0';
+                    const secs = totalSec > 0 ? String(totalSec % 60) : '0';
+
+                    return {
+                        _uid: nextUid('lec'),
+                        lectureId: lec.lectureId ?? null,
+                        title: lec.title ?? '',
+                        minutes: mins,
+                        seconds: secs,
+                    };
+                });
+
+            return {
+                _uid: nextUid('ch'),
+                chapterId: ch.chapterId ?? null,
+                title: ch.title ?? '',
+                lectures: matchedLectures,
+            };
+        });
+    }
 
     // classId가 있을 경우 내부에서 커리큘럼 조회 API (GET /tutor/{classId}/chapter) 호출
     useEffect(() => {
@@ -54,6 +102,7 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
         }
 
         let ignore = false;
+        const reqKey = `${classId}:${reloadKey}`;
 
         async function fetchCurriculum() {
             try {
@@ -65,58 +114,20 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
                     throw new Error(result.message || '커리큘럼 정보를 불러오지 못했습니다.');
                 }
 
-                const rawChapters = Array.isArray(result.data?.chapters)
-                    ? [...result.data.chapters].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-                    : [];
-                const rawLectures = Array.isArray(result.data?.lectures)
-                    ? [...result.data.lectures].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-                    : [];
-
-                if (rawChapters.length === 0) {
-                    setChapters([createEmptyChapter()]);
-                    setLoadedClassId(classId);
-                    return;
-                }
-
-                const mappedChapters = rawChapters.map((ch) => {
-                    const matchedLectures = rawLectures
-                        .filter((lec) => lec.chapterId === ch.chapterId)
-                        .map((lec) => {
-                            // 백엔드 durationSec (초 단위) -> 분 / 초 변환 (구버전 durationMinutes 폴백 호환)
-                            const totalSec =
-                                typeof lec.durationSec === 'number'
-                                    ? lec.durationSec
-                                    : typeof lec.durationMinutes === 'number'
-                                      ? lec.durationMinutes * 60
-                                      : 0;
-                            const mins = totalSec > 0 ? String(Math.floor(totalSec / 60)) : '0';
-                            const secs = totalSec > 0 ? String(totalSec % 60) : '0';
-
-                            return {
-                                _uid: nextUid('lec'),
-                                lectureId: lec.lectureId ?? null,
-                                title: lec.title ?? '',
-                                minutes: mins,
-                                seconds: secs,
-                            };
-                        });
-
-                    return {
-                        _uid: nextUid('ch'),
-                        chapterId: ch.chapterId ?? null,
-                        title: ch.title ?? '',
-                        lectures: matchedLectures,
-                    };
-                });
-
-                setChapters(mappedChapters);
+                setChapters(mapCurriculumResponse(result.data));
                 setEmptyChapterErrors({});
-                setLoadedClassId(classId);
+                setLoadError('');
+                setLoadedKey(reqKey);
+                if (typeof onLoadError === 'function') {
+                    onLoadError('');
+                }
             } catch (error) {
                 if (ignore) return;
-                setLoadedClassId(classId);
+                const msg = error.message || '커리큘럼 정보를 불러오지 못했습니다.';
+                setLoadError(msg);
+                setLoadedKey(reqKey);
                 if (typeof onLoadError === 'function') {
-                    onLoadError(error.message || '커리큘럼 정보를 불러오지 못했습니다.');
+                    onLoadError(msg);
                 }
             }
         }
@@ -127,7 +138,7 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
             ignore = true;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [classId]);
+    }, [classId, reloadKey]);
 
     // 백엔드 전송용 평탄화 데이터 생성
     function buildPayload() {
@@ -166,6 +177,21 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
 
     // 유효성 검증
     function validateCurriculum() {
+        if (isLoading) {
+            return {
+                valid: false,
+                message: '커리큘럼 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+            };
+        }
+
+        if (loadError) {
+            return {
+                valid: false,
+                message:
+                    '커리큘럼 정보를 불러오지 못한 상태에서는 저장할 수 없습니다. 커리큘럼 영역에서 다시 불러오기를 진행해 주세요.',
+            };
+        }
+
         if (chapters.length === 0) {
             return { valid: false, message: '최소 1개 이상의 챕터를 추가해 주세요.' };
         }
@@ -249,6 +275,12 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
             throw new Error('클래스 번호가 없어 커리큘럼을 저장할 수 없습니다.');
         }
 
+        if (isLoading || loadError) {
+            throw new Error(
+                '커리큘럼 정보를 정상적으로 불러오지 못한 상태에서는 커리큘럼을 저장할 수 없습니다.'
+            );
+        }
+
         const payload = buildPayload();
         const response = await authFetch(`/tutor/${encodeURIComponent(effectiveClassId)}/chapter`, {
             method: 'PATCH',
@@ -260,13 +292,34 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
             throw new Error(result.message || '커리큘럼 저장 중 오류가 발생했습니다.');
         }
 
+        // PATCH 성공 직후 최신 커리큘럼(새로 발급된 chapterId, lectureId)을 다시 조회하여 로컬 상태 동기화
+        // -> 이후 클래스 기본 정보 PATCH가 실패해 재시도하더라도 신규 챕터/강의가 중복 생성되지 않도록 보장
+        try {
+            const syncRes = await authFetch(`/tutor/${encodeURIComponent(effectiveClassId)}/chapter`);
+            const syncJson = await syncRes.json().catch(() => ({}));
+            if (syncRes.ok && syncJson.success && syncJson.data) {
+                setChapters(mapCurriculumResponse(syncJson.data));
+                setEmptyChapterErrors({});
+                setLoadError('');
+            }
+        } catch {
+            // 동기화 재조회 실패 시에는 기존 상태를 유지
+        }
+
         return result.data;
+    }
+
+    function handleRetryLoad() {
+        setLoadError('');
+        setReloadKey((k) => k + 1);
     }
 
     useImperativeHandle(ref, () => ({
         validate: validateCurriculum,
         getPayload: buildPayload,
         saveCurriculum,
+        hasLoadError: () => Boolean(loadError),
+        retryLoad: handleRetryLoad,
     }));
 
     // ── 챕터 조작 핸들러 ─────────────────────────────
@@ -505,6 +558,27 @@ const CurriculumEditor = forwardRef(function CurriculumEditor(
             <div className="space-y-3">
                 <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
                 <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 text-center">
+                <p className="text-sm font-semibold text-red-700">
+                    커리큘럼 정보를 불러오지 못했습니다.
+                </p>
+                <p className="mt-1 text-xs text-red-600">{loadError}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                    기존 커리큘럼 보호를 위해 조회가 완료되기 전에는 편집 및 저장할 수 없습니다.
+                </p>
+                <button
+                    type="button"
+                    onClick={handleRetryLoad}
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand/90"
+                >
+                    커리큘럼 다시 불러오기
+                </button>
             </div>
         );
     }

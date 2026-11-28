@@ -51,9 +51,14 @@ function InstructorClassFormPage() {
     }));
 
     // 수정 모드 초기 로딩 상태 및 클래스 상태(status)
-    const [loadedClassId, setLoadedClassId] = useState(null);
+    const [loadedKey, setLoadedKey] = useState(null);
+    const [loadError, setLoadError] = useState('');
+    const [reloadKey, setReloadKey] = useState(0);
+    const [curriculumLoadError, setCurriculumLoadError] = useState('');
     const [classStatus, setClassStatus] = useState('DRAFT');
-    const isPageLoading = isEditMode && isApproved && loadedClassId !== classId;
+
+    const currentRequestKey = isEditMode ? `${classId}:${reloadKey}` : null;
+    const isPageLoading = isEditMode && isApproved && loadedKey !== currentRequestKey;
 
     // 입력 폼 상태
     const [classType, setClassType] = useState('OFFLINE');
@@ -102,6 +107,7 @@ function InstructorClassFormPage() {
         }
 
         let ignore = false;
+        const reqKey = `${classId}:${reloadKey}`;
 
         async function fetchClassDetail() {
             try {
@@ -133,11 +139,13 @@ function InstructorClassFormPage() {
                     setDetailAddress('');
                 }
 
-                setLoadedClassId(classId);
+                setLoadError('');
+                setLoadedKey(reqKey);
             } catch (error) {
                 if (ignore) return;
-                setLoadedClassId(classId);
-                openAlert(error.message || '클래스 정보를 불러오지 못했습니다.', '조회 실패');
+                const msg = error.message || '클래스 정보를 불러오지 못했습니다.';
+                setLoadError(msg);
+                setLoadedKey(reqKey);
             }
         }
 
@@ -146,7 +154,7 @@ function InstructorClassFormPage() {
         return () => {
             ignore = true;
         };
-    }, [classId, isEditMode, isApproved]);
+    }, [classId, isEditMode, isApproved, reloadKey]);
 
     if (!isApproved) {
         return (
@@ -279,6 +287,18 @@ function InstructorClassFormPage() {
 
     // 전체 폼 유효성 검사
     function validateForm() {
+        if (isEditMode && loadError) {
+            openAlert('클래스 정보를 불러오지 못한 상태에서는 저장할 수 없습니다. 다시 시도해 주세요.');
+            return false;
+        }
+
+        if (isEditMode && (curriculumLoadError || curriculumRef.current?.hasLoadError?.())) {
+            openAlert(
+                '커리큘럼 정보를 불러오지 못한 상태에서는 저장할 수 없습니다. 커리큘럼 영역에서 다시 불러오기를 진행해 주세요.'
+            );
+            return false;
+        }
+
         if (isAllBlocked) {
             openAlert('현재 상태에서는 클래스 정보를 수정할 수 없습니다.');
             return false;
@@ -420,32 +440,43 @@ function InstructorClassFormPage() {
                 navigate('/instructor/classes', { replace: true });
             } else {
                 // ── 2. 클래스 수정: PATCH /tutor/{classId}/chapter + PATCH /tutor/{classId} ──
+                // (1) 커리큘럼 저장 (내부에서 PATCH 성공 직후 최신 chapterId/lectureId를 재조회하여 동기화함)
                 await curriculumRef.current.saveCurriculum(classId);
 
-                const formData = new FormData();
-                formData.append('classType', classType);
-                formData.append('title', title.trim());
-                formData.append('categoryId', Number(categoryId));
-                formData.append('summary', summary.trim());
-                formData.append('price', numericPrice);
-                formData.append('discountRate', numericDiscountRate);
-                if (bannerFile) {
-                    formData.append('bannerImage', bannerFile);
-                }
-                formData.append('description', description);
+                // (2) 클래스 기본/상세 정보 저장
+                try {
+                    const formData = new FormData();
+                    formData.append('classType', classType);
+                    formData.append('title', title.trim());
+                    formData.append('categoryId', Number(categoryId));
+                    formData.append('summary', summary.trim());
+                    formData.append('price', numericPrice);
+                    formData.append('discountRate', numericDiscountRate);
+                    if (bannerFile) {
+                        formData.append('bannerImage', bannerFile);
+                    }
+                    formData.append('description', description);
 
-                if (classType === 'OFFLINE') {
-                    formData.append('address', buildCombinedAddress());
-                }
+                    if (classType === 'OFFLINE') {
+                        formData.append('address', buildCombinedAddress());
+                    }
 
-                const response = await authFetch(`/tutor/${encodeURIComponent(classId)}`, {
-                    method: 'PATCH',
-                    body: formData,
-                });
-                const result = await response.json().catch(() => ({}));
+                    const response = await authFetch(`/tutor/${encodeURIComponent(classId)}`, {
+                        method: 'PATCH',
+                        body: formData,
+                    });
+                    const result = await response.json().catch(() => ({}));
 
-                if (!response.ok || !result.success) {
-                    throw new Error(result.message || '클래스 수정에 실패했습니다.');
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || '클래스 기본 정보 수정에 실패했습니다.');
+                    }
+                } catch (classPatchError) {
+                    throw new Error(
+                        `커리큘럼 변경 사항은 저장되었으나 클래스 기본 정보 수정에 실패했습니다.\n(${
+                            classPatchError.message || '서버 오류'
+                        })\n입력 항목을 확인한 뒤 '수정 완료'를 다시 눌러 재시도해 주세요.`,
+                        { cause: classPatchError }
+                    );
                 }
 
                 navigate('/instructor/classes', { replace: true });
@@ -474,6 +505,40 @@ function InstructorClassFormPage() {
                 <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
                 <div className="h-64 animate-pulse rounded-2xl bg-gray-100" />
                 <div className="h-64 animate-pulse rounded-2xl bg-gray-100" />
+            </div>
+        );
+    }
+
+    // 수정 모드에서 클래스 정보 조회 실패 시 빈 폼 노출 및 덮어쓰기 저장을 원천 차단하고 재시도 화면 표시
+    if (isEditMode && loadError) {
+        return (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-20 px-4 text-center shadow-sm">
+                <p className="text-base font-semibold text-gray-800">
+                    클래스 정보를 불러오지 못했습니다
+                </p>
+                <p className="mt-1 text-xs text-gray-500">{loadError}</p>
+                <p className="mt-1 text-xs text-gray-400">
+                    기존 클래스 데이터 보호를 위해 조회 실패 상태에서는 수정할 수 없습니다.
+                </p>
+                <div className="mt-5 flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/instructor/classes')}
+                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                    >
+                        목록으로 돌아가기
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setLoadError('');
+                            setReloadKey((k) => k + 1);
+                        }}
+                        className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand/90"
+                    >
+                        다시 시도
+                    </button>
+                </div>
             </div>
         );
     }
@@ -766,7 +831,12 @@ function InstructorClassFormPage() {
                         ref={curriculumRef}
                         classId={isEditMode ? classId : undefined}
                         disabled={isAllBlocked}
-                        onLoadError={(msg) => openAlert(msg, '커리큘럼 조회 실패')}
+                        onLoadError={(msg) => {
+                            setCurriculumLoadError(msg);
+                            if (msg) {
+                                openAlert(msg, '커리큘럼 조회 실패');
+                            }
+                        }}
                     />
                 </div>
             </section>
@@ -840,7 +910,11 @@ function InstructorClassFormPage() {
                 </button>
                 <button
                     type="button"
-                    disabled={isSubmitting || isAllBlocked}
+                    disabled={
+                        isSubmitting ||
+                        isAllBlocked ||
+                        (isEditMode && (Boolean(loadError) || Boolean(curriculumLoadError)))
+                    }
                     onClick={handleSaveButtonClick}
                     className="h-11 w-32 rounded-lg bg-brand text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
