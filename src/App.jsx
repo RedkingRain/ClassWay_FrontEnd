@@ -20,6 +20,7 @@ import ClassListPage from "./components/classList/ClassListPage.jsx";
 import AdminTutorApprovalPage from './components/admin/AdminTutorApprovalPage.jsx';
 import InstructorLayout from './components/instructor/InstructorLayout.jsx';
 import InstructorClassListPage from './components/instructor/InstructorClassListPage.jsx';
+import InstructorClassFormPage from './components/instructor/InstructorClassFormPage.jsx';
 import ReadyNotice from './components/common/ReadyNotice.jsx';
 import StudyDashboardPage from './components/study/StudyDashboardPage.jsx';
 // 다른 팀원 페이지는 여기에 import 추가
@@ -54,8 +55,8 @@ function App() {
                 <Route path="/instructor" element={<InstructorLayout />}>
                     <Route index element={<Navigate to="classes" replace />} />
                     <Route path="classes" element={<InstructorClassListPage />} />
-                    <Route path="classes/new" element={<ReadyNotice title="새 클래스 등록" />} />
-                    <Route path="classes/:classId/edit" element={<ReadyNotice title="클래스 정보 수정" />} />
+                    <Route path="classes/new" element={<InstructorClassFormPage />} />
+                    <Route path="classes/:classId/edit" element={<InstructorClassFormPage />} />
                     <Route path="classes/:classId/schedules" element={<ReadyNotice title="회차 · 예약자 관리" />} />
                     <Route path="classes/:classId/lectures" element={<ReadyNotice title="온라인 강의실 관리" />} />
                     <Route path="dashboard" element={<ReadyNotice title="운영 현황" />} />

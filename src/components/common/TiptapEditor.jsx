@@ -10,7 +10,7 @@ function toValue(editor) {
 }
 
 // 팀 공용 글쓰기 에디터 (내용은 HTML 글자로 주고받음, 비어 있으면 '')
-function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }) {
+function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label, disabled = false }) {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -18,6 +18,7 @@ function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }
             Placeholder.configure({ placeholder }),
         ],
         content: value,
+        editable: !disabled,
         // v3는 기본으로 다시 그리지 않아서, 글자 수와 툴바 선택 표시가 바로 바뀌게 켜 둠
         shouldRerenderOnTransaction: true,
         editorProps: {
@@ -34,6 +35,12 @@ function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }
             onChange(toValue(current));
         },
     });
+
+    // disabled 상태 변경 시 에디터 편집 가능 여부 동기화
+    useEffect(() => {
+        if (!editor) return;
+        editor.setEditable(!disabled);
+    }, [editor, disabled]);
 
     // 부모 값이 바뀌면(불러오기, 비우기) 에디터에 반영. 입력 중에는 value가 에디터 내용과 같아서 덮어쓰지 않음
     useEffect(() => {
@@ -55,16 +62,21 @@ function TiptapEditor({ value, onChange, placeholder = '', limit = 1000, label }
 
     return (
         <div>
-            <div className="rounded-lg border border-gray-300 focus-within:border-brand">
+            <div
+                className={`rounded-lg border border-gray-300 ${
+                    disabled ? 'bg-gray-50 opacity-75' : 'bg-white focus-within:border-brand'
+                }`}
+            >
                 <div className="flex gap-1 border-b border-gray-200 px-2 py-1.5">
                     {tools.map(({ label: toolLabel, icon: Icon, name, run }) => (
                         <button
                             key={name}
                             type="button"
                             onClick={run}
+                            disabled={disabled}
                             aria-label={toolLabel}
                             aria-pressed={editor.isActive(name)}
-                            className={`rounded p-1.5 ${
+                            className={`rounded p-1.5 disabled:cursor-not-allowed disabled:opacity-50 ${
                                 editor.isActive(name) ? 'bg-brand-light text-brand' : 'text-gray-500 hover:bg-gray-100'
                             }`}
                         >
