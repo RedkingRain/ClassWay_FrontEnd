@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Paperclip } from 'lucide-react';
 import { formatDate } from '../../utils/format.js';
 
 // 공지 / 학습 자료 게시판 (STUDY-001), 순서는 서버가 공지 먼저, 최신순으로 정해서 줌
@@ -60,6 +61,13 @@ function StudyPostTable({ classId, posts, isTutor }) {
                                 >
                                     {post.title}
                                 </Link>
+                                {post.hasAttachment && (
+                                    <Paperclip
+                                        size={14}
+                                        aria-label="첨부파일 있음"
+                                        className="ml-1.5 inline text-gray-400"
+                                    />
+                                )}
                             </td>
                             <td className="px-2 py-5 text-gray-600">{formatDate(post.createdAt)}</td>
                             <td className="px-7 py-5 text-gray-600">{post.viewCount}</td>

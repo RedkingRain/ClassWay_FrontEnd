@@ -6,6 +6,7 @@ import { authFetch } from '../../utils/auth.js';
 import { formatDateWithDay, formatDuration, formatTime, toDateKey } from '../../utils/format.js';
 import StudyLectureList from './StudyLectureList.jsx';
 import StudyPostTable from './StudyPostTable.jsx';
+import StudyApprovalButton from './StudyApprovalButton.jsx';
 
 // 응답이 올 때까지 화면 모양을 회색 상자로 미리 보여 줌
 function StudyDashboardSkeleton() {
@@ -126,6 +127,11 @@ function StudyDashboardPage() {
         .filter(Boolean)
         .join(' | ');
 
+    // 서버는 이미 PENDING으로 바뀌어서 다시 불러오지 않고 화면 값만 맞춤
+    function handleApprovalRequested() {
+        setLoaded({ ...loaded, dashboard: { ...dashboard, status: 'PENDING' } });
+    }
+
     return (
         <main className="mx-auto max-w-6xl px-4 py-10">
             {/* 강사는 클래스 관리에서, 수강생은 예약·수강 내역(MY-002)에서 들어옴 */}
@@ -148,7 +154,7 @@ function StudyDashboardPage() {
                     )}
                 </div>
 
-                <div>
+                <div className="flex-1">
                     <p className="text-sm text-gray-500">{isOnline ? '온라인 | VOD' : '오프라인 | 원데이'}</p>
                     <h1 className="mt-1 text-2xl font-semibold text-gray-900">{dashboard.title}</h1>
                     {isOnline ? (
@@ -164,16 +170,26 @@ function StudyDashboardPage() {
                         <p className="mt-2 text-sm text-gray-600">{offlineInfo}</p>
                     )}
                 </div>
+
+                {dashboard.isTutor && (
+                    <StudyApprovalButton
+                        classId={dashboard.classId}
+                        status={dashboard.status}
+                        onRequested={handleApprovalRequested}
+                    />
+                )}
             </div>
 
             {/* 강의실 탭은 강사 화면에만 있음 (와이어프레임) */}
             {dashboard.isTutor && (
-                <div className="mt-10 flex items-end justify-between border-b border-gray-200">
-                    <span className="border-b-2 border-brand pb-3 font-semibold text-gray-900">강의실</span>
+                <div className="mt-10 flex items-center justify-between border-b border-gray-200">
+                    <span className="-mb-px flex h-12 w-[120px] items-center justify-center border-b-[3px] border-brand font-semibold text-gray-900">
+                        강의실
+                    </span>
                     {!isOnline && (
                         <Link
                             to={`/instructor/classes/${dashboard.classId}/schedules`}
-                            className="pb-3 text-sm text-gray-600 hover:text-gray-900"
+                            className="text-sm text-gray-600 hover:text-gray-900"
                         >
                             회차 · 예약자 관리 ›
                         </Link>
